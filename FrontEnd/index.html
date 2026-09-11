@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabor e Clic — Entrar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a href="#loginForm" class="skip-link">Pular para o formulário de login</a>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-brand">
+      <div class="login-brand-inner">
+        <div class="brand-mark lg"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div>
+        <h1>Sabor e Clic</h1>
+        <p>Cozinha compartilhada com bancadas reserváveis. Entre com a sua conta para acessar a área do seu perfil.</p>
+      </div>
+    </div>
+    <div class="login-form-wrap">
+      <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
+        <h2>Entrar</h2>
+        <p class="meta">O sistema identifica automaticamente se você é cliente, cozinheiro ou administrador.</p>
+        <label class="field">E-mail<input id="loginEmail" type="email" placeholder="voce@exemplo.com" required></label>
+        <label class="field">Senha<input id="loginPassword" type="password" placeholder="••••••••" required></label>
+        <div class="login-error" id="loginError" role="alert"></div>
+        <button class="btn full" type="submit">Entrar</button>
+        <div class="login-demo">
+          <span class="meta" id="demoLabel">Contas de demonstração (protótipo, qualquer senha funciona):</span>
+          <button type="button" class="demo-chip" onclick="fillLogin('rafael@exemplo.com')" aria-describedby="demoLabel">rafael@exemplo.com <small>Cliente</small></button>
+          <button type="button" class="demo-chip" onclick="fillLogin('marina@saboreclic.com')" aria-describedby="demoLabel">marina@saboreclic.com <small>Cozinheiro</small></button>
+          <button type="button" class="demo-chip" onclick="fillLogin('ana@saboreclic.com')" aria-describedby="demoLabel">ana@saboreclic.com <small>Administrador</small></button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="assets/data.js"></script>
+  <script src="assets/site.js"></script>
+  <script src="assets/login.js"></script>
+  <script src="assets/a11y.js"></script>
+</body>
+</html>
