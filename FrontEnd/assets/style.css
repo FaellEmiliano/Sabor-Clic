@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
-
+/* Fontes de Texto Importadas */
 :root{
 
   --charcoal:#2B241E;
@@ -12,15 +12,15 @@
   --surface-3:#E8DDC9;
   --text:#241E19;
   --text-on-dark:#F3ECE0;
-  --muted:#74695D; /* 4.76:1 sobre --bg (o tom anterior, #7A6F62, ficava em 4.36:1 — abaixo do AA) */
+  --muted:#74695D; 
   --muted-on-dark:#B7AA98;
   --line:#E4D9C6;
 
   --copper:#BB6B2F;
   --copper-dark:#96521F;
   --copper-soft:#F0DAC3;
-  --copper-accessible:#A8602A; /* usado em texto/botão: 4.8:1 sobre branco (--copper puro fica em 3.99:1, abaixo do AA) */
-  --saffron-accessible:#946922; /* usado em botão: 4.88:1 sobre branco (--saffron puro fica em 3.31:1) */
+  --copper-accessible:#A8602A; 
+  --saffron-accessible:#946922; 
   --herb:#4B7A52;
   --herb-soft:#DEE8DC;
   --saffron:#B9832A;
@@ -36,9 +36,9 @@
   --radius:9px;
   --radius-lg:13px;
 
-  --font-display:'Archivo','Hanken Grotesk',Segoe UI,Arial,sans-serif;
-  --font-ui:'Hanken Grotesk',Segoe UI,Arial,sans-serif;
-  --font-mono:'Courier New',ui-monospace,monospace;
+  --font-display:'Archivo','Hanken Grotesk', Segoe UI,Arial,sans-serif;
+  --font-ui:'Hanken Grotesk', Segoe UI,Arial,sans-serif;
+  --font-mono:'Courier New', ui-monospace,monospace;
 }
 
 * {
@@ -863,7 +863,7 @@ td:first-child, th:first-child {
   outline-offset: 2px;
 }
 
-/* Texto só para leitor de tela — some visualmente, mas continua acessível */
+/* Texto só para leitor de tela — some visualmente, mas continua */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -930,7 +930,7 @@ td:first-child, th:first-child {
 
 
 
-/* ===== Modo de Acessibilidade / WCAG ===== */
+/* Modo de Acessibilidade e u WCAG ===== */
 .a11y-trigger {
   position: fixed;
   right: 22px;
@@ -1081,7 +1081,7 @@ body.a11y-focus-helper [tabindex]:focus-visible {
   .a11y-panel { bottom: 78px; right: 14px; }
 }
 
-/* Ajustes ativados pelo modo de acessibilidade */
+/* Parte de Acessibilidade */
 body.a11y-contrast { filter: contrast(1.18); }
 body.a11y-contrast .a11y-panel { filter: none; }
 body.a11y-grayscale { filter: grayscale(1); }
