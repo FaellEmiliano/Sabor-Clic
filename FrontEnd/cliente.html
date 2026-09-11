@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabor e Clic — Cliente</title>
+  <script>window.INITIAL_ROLE="cliente";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-brand">
+      <div class="login-brand-inner">
+        <div class="brand-mark lg"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div>
+        <h1>Sabor e Clic</h1>
+        <p>Cozinha compartilhada com bancadas reserváveis. Entre com a sua conta para acessar a área do seu perfil.</p>
+      </div>
+    </div>
+    <div class="login-form-wrap">
+      <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
+        <h2>Entrar</h2>
+        <p class="meta">O sistema identifica automaticamente se você é cliente, cozinheiro ou administrador.</p>
+        <label class="field">E-mail<input id="loginEmail" type="email" placeholder="voce@exemplo.com" required></label>
+        <label class="field">Senha<input id="loginPassword" type="password" placeholder="••••••••" required></label>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn full" type="submit">Entrar</button>
+        <div class="login-demo">
+          <span class="meta">Contas de demonstração (protótipo, qualquer senha funciona):</span>
+          <button type="button" class="demo-chip" onclick="fillLogin('rafael@exemplo.com')">rafael@exemplo.com <small>Cliente</small></button>
+          <button type="button" class="demo-chip" onclick="fillLogin('marina@saboreclic.com')">marina@saboreclic.com <small>Cozinheiro</small></button>
+          <button type="button" class="demo-chip" onclick="fillLogin('ana@saboreclic.com')">ana@saboreclic.com <small>Administrador</small></button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell hidden" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div>
+        <div>
+          <strong>Sabor e Clic</strong>
+        </div>
+      </div>
+
+      <nav id="menu"></nav>
+
+      <div class="sidebar-foot">
+        <div class="user-mini">
+          <div class="avatar" id="avatar">RG</div>
+          <div>
+            <strong id="userName">Rafael Gomes</strong>
+            <small id="userRole">Cliente</small>
+          </div>
+        </div>
+        <button class="btn secondary full" style="margin-top:12px" onclick="handleLogout()">Sair</button>
+      </div>
+    </aside>
+
+    <section class="main-shell">
+      <header class="topbar">
+        <div>
+          <button class="icon-btn mobile-only" onclick="toggleSidebar()">☰</button>
+          <span class="crumb" id="crumb">Cliente / Início</span>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn">🔔</button>
+          <button class="icon-btn" onclick="showToast('Ação simulada no protótipo.')">?</button>
+        </div>
+      </header>
+
+      <main id="app"></main>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="assets/app.js"></script>
+</body>
+</html>
