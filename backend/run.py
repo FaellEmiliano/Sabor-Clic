@@ -1,2 +1,4 @@
-from app.model.usuario_model import Usuario_model
-Usuario_model.criar_tabela()
+from app import app
+
+if __name__ == '__main__':
+    app.run(debug=True)
