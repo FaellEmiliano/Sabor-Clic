@@ -1,0 +1,257 @@
+P0002	STYLE=Normal	INSTITUTO FEDERAL DE EDUCAÇÃO CIÊNCIA E TECNOLOGIA DE SÃO PAULO
+P0003	STYLE=Normal	CURSO TÉCNICO EM DESENVOLVIMENTO DE SISTEMAS INTEGRADO AO ENSINO MÉDIO
+P0007	STYLE=Title	SABOR E CLIC
+P0008	STYLE=Normal	Documentação do Projeto Integrador do Terceiro Bimestre
+P0015	STYLE=Normal	São Paulo
+2026
+P0017	STYLE=Heading 1	SUMÁRIO
+P0018	STYLE=Normal	1 Apresentação do projeto
+P0019	STYLE=Normal	2 Objetivos e escopo
+P0020	STYLE=Normal	3 Concepção do sistema e integração entre disciplinas
+P0021	STYLE=Normal	4 Atores e responsabilidades
+P0022	STYLE=Normal	5 Fluxo geral do produto
+P0023	STYLE=Normal	6 Reserva
+P0024	STYLE=Normal	7 Sessão
+P0025	STYLE=Normal	8 Cardápio e carrinho
+P0026	STYLE=Normal	9 Pedidos
+P0027	STYLE=Normal	10 KDS
+P0028	STYLE=Normal	11 Administração de Bancadas e catálogo
+P0029	STYLE=Normal	12 Arquitetura da aplicação
+P0030	STYLE=Normal	13 Lógica JavaScript
+P0031	STYLE=Normal	14 Arquitetura Flask e rotas essenciais
+P0032	STYLE=Normal	15 Banco de dados e DER
+P0033	STYLE=Normal	16 Segurança e níveis de acesso
+P0034	STYLE=Normal	17 Identidade visual e prototipação
+P0035	STYLE=Normal	18 Requisitos funcionais e não funcionais
+P0036	STYLE=Normal	19 Tecnologias utilizadas
+P0037	STYLE=Normal	20 O que concluímos e próximas etapas
+P0038	STYLE=Normal	21 Atendimento aos requisitos do terceiro bimestre
+P0039	STYLE=Normal	Referências
+P0041	STYLE=Heading 1	1 APRESENTAÇÃO DO PROJETO
+P0042	STYLE=Normal	Nós desenvolvemos o Sabor e Clic como uma proposta de sistema para organizar a operação de uma cozinha compartilhada com Bancadas reserváveis e atendimento gastronômico integrado. Nosso ponto de partida foi um problema recorrente: quando Reservas, disponibilidade de espaços, Cardápio e Pedidos são controlados por planilhas ou anotações isoladas, surgem conflitos de horário, falta de rastreabilidade e dificuldade para acompanhar a produção. Por isso, concebemos uma experiência única que liga o Cliente à cozinha e à administração.
+P0043	STYLE=Normal	Nossa documentação acompanha o fluxo do produto: Reserva → Sessão → Cardápio e Pedidos → KDS. Escolhemos esse encadeamento porque cada Pedido precisa existir dentro de um contexto de atendimento. A Reserva define quem utilizará qual Bancada e em qual período; a Sessão representa o uso efetivo dessa Reserva; o Cardápio permite selecionar itens; o Pedido registra a solicitação; e o KDS oferece à cozinha uma visão organizada da produção.
+P0044	STYLE=Normal	Ao longo do terceiro bimestre, reunimos contribuições de Artes Visuais e Design, JavaScript, Python, Banco de Dados e Segurança. Nosso protótipo estático demonstra as principais telas e interações. A modelagem de dados descreve as entidades e os relacionamentos necessários para sustentar a aplicação. Também iniciamos a estrutura de back-end e definimos a arquitetura teórica das rotas que completarão a integração.
+P0046	STYLE=Heading 1	2 OBJETIVOS E ESCOPO
+P0047	STYLE=Heading 2	2.1 Objetivo geral
+P0048	STYLE=Normal	Nosso objetivo é construir um sistema web que permita administrar Bancadas gastronômicas, criar Reservas, iniciar Sessões, consultar o Cardápio, enviar Pedidos e acompanhar seu preparo no KDS. Pretendemos centralizar dados que normalmente estariam dispersos e oferecer uma visão adequada para Cliente, Cozinheiro e Administrador.
+P0049	STYLE=Heading 2	2.2 Objetivos específicos
+P0050	STYLE=List Bullet	Representar o fluxo completo do atendimento de forma clara e navegável.
+P0051	STYLE=List Bullet	Modelar as entidades, atributos e relacionamentos em um DER e em um dicionário de dados.
+P0052	STYLE=List Bullet	Aplicar JavaScript moderno para manipular o DOM, manter o carrinho e calcular valores em memória.
+P0053	STYLE=List Bullet	Definir uma API Flask organizada por responsabilidades, com comunicação por JSON.
+P0054	STYLE=List Bullet	Planejar autenticação, validação e RBAC para proteger ações e dados.
+P0055	STYLE=List Bullet	Criar identidade visual coerente e interfaces para Cardápio Digital e KDS.
+P0056	STYLE=Heading 2	2.3 Limites desta etapa
+P0057	STYLE=Normal	Nesta etapa concluímos o protótipo estático e a documentação conceitual de dados. Iniciamos o back-end, mas a aplicação Flask integrada ao banco ainda faz parte da evolução do projeto. Por esse motivo, quando descrevemos uma rota completa ou uma regra transacional, apresentamos a arquitetura que definimos para a implementação, distinguindo-a das interações que já funcionam localmente no protótipo.
+P0059	STYLE=Heading 1	3 CONCEPÇÃO DO SISTEMA E INTEGRAÇÃO ENTRE DISCIPLINAS
+P0060	STYLE=Normal	Nós organizamos o projeto como um sistema interdisciplinar. Design define como o usuário compreende estados e ações; JavaScript transforma a interface em uma experiência dinâmica; Flask centraliza regras e comunicação; Banco de Dados garante persistência e relacionamentos; Segurança controla identidade, permissão e validação. Nenhuma dessas partes resolve isoladamente o problema: a qualidade do fluxo depende da concordância entre todas elas.
+P0063	STYLE=Heading 1	4 ATORES E RESPONSABILIDADES
+P0065	STYLE=Normal	Nós representamos os três atores por menus distintos. Essa separação melhora a compreensão do protótipo, mas sabemos que visibilidade de menu não equivale a autorização. Na aplicação integrada, cada requisição protegida precisará ser validada pelo Flask de acordo com o usuário autenticado e seu papel.
+P0067	STYLE=Heading 1	5 FLUXO GERAL DO PRODUTO
+P0068	STYLE=Normal	O fluxo começa quando o Cliente consulta uma data e um intervalo. O sistema compara capacidade e disponibilidade das Bancadas. Com uma opção válida, cria a Reserva e preserva o período e o valor acordado. No início do atendimento, a Reserva gera uma Sessão única. É a Sessão ativa que autoriza o acesso ao Cardápio e a criação de Pedidos. A cozinha recebe o Pedido no KDS, altera seu estado e devolve esse progresso ao Cliente. No encerramento, a Sessão deixa de aceitar novos Pedidos e conserva o histórico.
+P0070	STYLE=Normal	Esse fluxo também orienta a estrutura de dados. O Pedido não precisa repetir Cliente ou Bancada, porque sua Sessão conduz à Reserva e a Reserva identifica ambos. Essa decisão reduz redundância e mantém uma única fonte para o contexto do atendimento.
+P0072	STYLE=Heading 1	6 RESERVA
+P0073	STYLE=Heading 2	6.1 Lógica de negócio
+P0074	STYLE=Normal	Nós tratamos a Reserva como o compromisso de uso de uma Bancada durante um intervalo. Para criar uma Reserva, precisamos identificar o Cliente, a Bancada, o início, o fim, o número de pessoas e o valor. A Bancada deve estar ativa, comportar o grupo e não possuir outra Reserva incompatível. O fim precisa ser posterior ao início.
+P0075	STYLE=Normal	A condição abstrata de conflito é: há sobreposição quando o início solicitado ocorre antes do fim existente e o fim solicitado ocorre depois do início existente. Essa regra deve ser executada no servidor imediatamente antes da gravação. A tela pode antecipar a disponibilidade, mas somente o back-end pode confirmar, pois outra pessoa pode reservar o mesmo intervalo enquanto o primeiro Cliente ainda preenche o formulário.
+P0076	STYLE=Heading 2	6.2 Contribuição de cada disciplina
+P0077	STYLE=Normal	Em Design, criamos cartões de Bancada, etiquetas de disponibilidade, filtros e formulário de Reserva. Em JavaScript, utilizamos o array benches e templates para renderizar capacidade, recursos, preço e estado. Em Banco de Dados, relacionamos CLIENTE e BANCADA à RESERVA. Em Flask, definimos a necessidade de rotas de consulta, criação, alteração e cancelamento. Em Segurança, estabelecemos que o Cliente só pode manipular suas próprias Reservas, enquanto o Administrador possui acesso operacional mais amplo.
+P0078	STYLE=Normal	const benches = [
+  {id:1, nome:"Bancada Toscana", cap:4, preco:85,
+   status:"Disponível", recursos:["Cooktop","Pia","Tomadas"]}
+];
+P0079	STYLE=Normal	Trecho 1 - Estrutura real utilizada para representar Bancadas no protótipo.
+P0080	STYLE=Normal	No protótipo, os dados permanecem em memória e os botões simulam confirmação. Na aplicação final, o JavaScript enviará os campos em JSON, exibirá estado de carregamento e tratará respostas 201, 400 ou 409 sem recarregar a página.
+P0082	STYLE=Heading 1	7 SESSÃO
+P0083	STYLE=Normal	Nós adotamos Sessão como entidade central do atendimento. Uma Reserva descreve o período contratado; a Sessão registra o uso efetivo e reúne os Pedidos daquele período. Cada Reserva deve gerar exatamente uma Sessão, protegida por uma relação um para um. A Sessão possui código de acesso, estado e datas de criação, início e encerramento.
+P0084	STYLE=Normal	Uma Sessão pode estar criada, ativa ou encerrada. Somente ativa aceita Pedidos. A ativação registra o início real; o encerramento invalida o código de acesso e bloqueia novas solicitações. Essa verificação precisa acontecer no Flask a cada Pedido, pois não podemos confiar apenas no botão da interface.
+P0085	STYLE=Normal	Na tela que desenvolvemos, mostramos tempo restante, quantidade de Pedidos, consumo, pessoas, Pedidos vinculados e ações de navegação. Em JavaScript, essa tela é uma função do objeto views. No banco, SESSAO recebe uma referência única à RESERVA e origina vários PEDIDOS. Em Segurança, o acesso deve ser limitado ao Cliente responsável, à operação autorizada e ao Administrador.
+P0087	STYLE=Heading 1	8 CARDÁPIO E CARRINHO
+P0088	STYLE=Normal	Nosso Cardápio Digital apresenta foto, nome, descrição, categoria, preço e disponibilidade. Criamos oito produtos demonstrativos e organizamos a experiência em Entradas, Pratos, Bebidas e Sobremesas. Quando um item está indisponível, desabilitamos seu botão de adição. Essa regra visual ajuda o usuário, mas o servidor deverá revalidá-la na confirmação.
+P0089	STYLE=Heading 2	8.1 Lógica do carrinho
+P0090	STYLE=Normal	function addCart(id){
+  const p=products.find(x=>x.id===id);
+  if(p.status!=="Disponível") return;
+  const ex=state.cart.find(x=>x.id===id);
+  if(ex) ex.qtd++;
+  else state.cart.push({id:p.id,nome:p.nome,preco:p.preco,qtd:1});
+}
+function cartTotal(){
+  return state.cart.reduce((s,i)=>s+i.preco*i.qtd,0);
+}
+P0091	STYLE=Normal	Trecho 2 - Adição de item e cálculo do total no protótipo.
+P0092	STYLE=Normal	Primeiro localizamos o produto pelo identificador. Se ele estiver indisponível, encerramos a função. Depois procuramos o mesmo item no carrinho: quando existe, incrementamos a quantidade; quando não existe, adicionamos um novo objeto. O total é calculado com reduce, acumulando preço multiplicado pela quantidade. Essa lógica satisfaz o objetivo do terceiro bimestre de manipular arrays, objetos e cálculos em memória.
+P0093	STYLE=Normal	Na integração, o navegador enviará identificadores e quantidades, mas não será responsável pelo valor final. O Flask consultará os preços atuais, validará cada Prato e calculará os subtotais. Isso evita que um preço alterado no console do navegador seja aceito como verdadeiro.
+P0095	STYLE=Heading 1	9 PEDIDOS
+P0096	STYLE=Normal	O Pedido agrupa itens solicitados durante uma Sessão. Definimos que ele deve possuir ao menos um ITEM_PEDIDO, estado, valor total, tempo estimado e data de criação. ITEM_PEDIDO preserva quantidade, preço unitário praticado e subtotal. Mesmo que o preço do catálogo mude posteriormente, o histórico continua representando a compra original.
+P0097	STYLE=Normal	Ao confirmar, o servidor deverá verificar autenticação, propriedade da Sessão, estado ativo, lista não vazia, quantidades positivas e Pratos disponíveis. Em seguida, buscará os preços, calculará subtotais, gravará Pedido e itens na mesma transação e devolverá JSON. Se qualquer etapa falhar, a transação inteira deve ser desfeita.
+P0100	STYLE=Heading 1	10 KDS
+P0101	STYLE=Normal	O Kitchen Display System é o painel do Cozinheiro. Nós o organizamos em colunas para tornar o estado imediatamente visível: Recebidos, Em preparo e Prontos. Cada ticket apresenta número, Bancada, tempo e itens. Cores e etiquetas reforçam prioridade e atraso. Essa estrutura reduz a necessidade de abrir cada Pedido separadamente.
+P0102	STYLE=Normal	No protótipo, os tickets são exemplos fixos e os botões acionam um toast. Na arquitetura definida, o KDS consultará a API e enviará alterações de estado. A interface só moverá o ticket depois da confirmação do servidor. O Flask validará a transição para impedir saltos ou regressões incoerentes. Dois Cozinheiros atuando ao mesmo tempo deverão receber uma resposta de conflito quando tentarem atualizar uma versão antiga do Pedido.
+P0103	STYLE=Normal	Design contribui com hierarquia, cores e leitura rápida. JavaScript controla renderização e atualização sem F5. Flask organiza fila e transições. Banco registra estado e horários. Segurança limita as ações a Cozinheiro e Administrador. Assim, o KDS reúne todas as disciplinas em uma única função operacional.
+P0105	STYLE=Heading 1	11 ADMINISTRAÇÃO DE BANCADAS E CATÁLOGO
+P0106	STYLE=Normal	O Administrador configura os recursos utilizados nos fluxos anteriores. Desenvolvemos telas para Bancadas, Reservas, Produtos, Ingredientes, substituições, usuários e relatórios. As operações exibidas ainda são demonstrativas, mas definem a experiência e os dados necessários para os futuros CRUDs.
+P0107	STYLE=Normal	A exclusão de Prato deve ser lógica por meio do atributo ativo. Dessa forma, um item deixa de aparecer para novas compras sem destruir ITEM_PEDIDO histórico. A ficha técnica relaciona Prato e Ingrediente com quantidade necessária. A substituição é direcional e possui prioridade e fator de conversão. A futura disponibilidade poderá somar o consumo de todos os itens e escolher substitutos autorizados quando o ingrediente original estiver insuficiente.
+P0109	STYLE=Heading 1	12 ARQUITETURA DA APLICAÇÃO
+P0110	STYLE=Normal	Nós definimos uma arquitetura em camadas. O navegador contém HTML, CSS e JavaScript; a comunicação utiliza HTTP e JSON; o Flask recebe requisições, autentica, valida e executa regras; a camada de dados persiste entidades relacionais. O banco nunca deve ser acessado diretamente pelo navegador.
+P0112	STYLE=Normal	O README registra uma estrutura futura modular, com routes, controllers, models, services e middleware. Os arquivos atuais de back-end são iniciais e ainda não formam essa aplicação completa. Documentamos a estrutura como direção arquitetural que adotamos, sem afirmar que todos os módulos já estão implementados.
+P0114	STYLE=Heading 1	13 LÓGICA JAVASCRIPT
+P0115	STYLE=Normal	O objeto state concentra perfil, página atual, carrinho e estado de Reserva. menus associa cada papel às telas permitidas; roleInfo guarda contas demonstrativas; views reúne funções que devolvem templates HTML. A função render substitui o conteúdo do elemento app e renderMenu reconstrói a navegação. Com isso, simulamos uma SPA simples sem biblioteca externa.
+P0116	STYLE=Normal	function go(page){
+  state.page=page;
+  renderMenu();
+  render();
+  window.scrollTo(0,0);
+}
+function render(){
+  pageTitle();
+  el("app").innerHTML=views[state.page]();
+}
+P0117	STYLE=Normal	Trecho 3 - Navegação e renderização dinâmica do protótipo.
+P0118	STYLE=Normal	Utilizamos const, arrow functions, template literals, map, filter, reduce, find e for...in. Também criamos funções auxiliares para cartões, indicadores e tickets. showToast fornece feedback temporário ao usuário. O login demonstra a seleção de perfil por e-mail, porém qualquer senha é aceita; portanto, ele representa navegação por papéis e não autenticação de produção.
+P0119	STYLE=Normal	Na próxima etapa, pretendemos separar modelos, API e páginas. Classes como Prato, ItemPedido, Carrinho e Pedido poderão encapsular estado e validações. As chamadas fetch serão assíncronas e envolvidas em try...catch, com estados de carregamento, sucesso e erro. Dados externos não deverão ser inseridos por innerHTML sem escape, para reduzir risco de XSS.
+P0121	STYLE=Heading 1	14 ARQUITETURA FLASK E ROTAS ESSENCIAIS
+P0122	STYLE=Normal	As rotas a seguir representam a arquitetura que definimos para completar o produto. Nosso back-end atual possui arquivos iniciais, mas a API ainda deverá ser organizada e integrada. Em MVC, a rota recebe HTTP; o controller coordena o caso de uso; o service aplica regras; o model acessa dados; e a rota devolve JSON com código adequado.
+P0124	STYLE=Heading 2	14.1 Exemplo teórico de rota
+P0125	STYLE=Normal	@bp.post("/api/sessoes/<int:id>/pedidos")
+@login_required
+def criar_pedido(id):
+    payload = request.get_json() or {}
+    pedido = pedido_service.criar(
+        sessao_id=id, usuario=g.user, itens=payload.get("itens", [])
+    )
+    return jsonify(pedido.to_dict()), 201
+P0126	STYLE=Normal	Trecho 4 - Exemplo teórico da responsabilidade reduzida de uma rota Flask.
+P0127	STYLE=Normal	Nesse exemplo, a rota não calcula preços nem consulta estoque diretamente. Ela autentica por decorador, lê JSON, entrega dados ao serviço e serializa o resultado. O service confirma a propriedade da Sessão, verifica se está ativa, valida quantidades, busca Pratos, calcula valores e grava a transação. Essa divisão evita controllers extensos e facilita testes.
+P0128	STYLE=Normal	Utilizaremos 200 para leituras e alterações bem-sucedidas, 201 para criação, 400 para dados inválidos, 401 para falta de autenticação, 403 para papel inadequado, 404 para recurso inexistente e 409 para conflito de Reserva, Sessão ou estado. O JavaScript interpretará esses códigos e mostrará feedback específico.
+P0130	STYLE=Heading 1	15 BANCO DE DADOS E DER
+P0131	STYLE=Normal	Nós modelamos USUARIO e suas especializações CLIENTE, COZINHEIRO e ADMINISTRADOR; BANCADA e RESERVA; SESSAO, PEDIDO e ITEM_PEDIDO; PRATO e INGREDIENTE; além de FICHA_TECNICA e SUBSTITUIDO_POR. O dicionário descreve atributos, tipos sugeridos, domínios e regras de consistência.
+P0133	STYLE=Normal	Figura 1 - Diagrama Entidade Relacionamento do Sabor e Clic. Fonte: elaboração da equipe, 2026.
+P0134	STYLE=Normal	A cadeia RESERVA ↔ SESSAO → PEDIDO → ITEM_PEDIDO é o núcleo do modelo. CLIENTE solicita RESERVA e BANCADA é utilizada pela RESERVA. Cada item referencia um PRATO. FICHA_TECNICA resolve a relação muitos para muitos entre Prato e Ingrediente, enquanto SUBSTITUIDO_POR utiliza duas referências para Ingrediente.
+P0136	STYLE=Normal	Figura 2 - Modelo de entidades e relacionamentos. Fonte: elaboração da equipe, 2026.
+P0137	STYLE=Normal	Definimos regras de integridade: e-mail único, valores não negativos, fim posterior ao início, Sessão única por Reserva, quantidade positiva, Pedido com itens e chaves estrangeiras obrigatórias. No quarto bimestre, o modelo físico deverá traduzir essas regras para SQL, constraints, índices, inserções básicas, consultas e triggers de estoque.
+P0139	STYLE=Heading 1	16 SEGURANÇA E NÍVEIS DE ACESSO
+P0140	STYLE=Normal	Definimos RBAC com três papéis. Cliente acessa seus próprios dados; Cozinheiro opera Pedidos e KDS; Administrador gerencia cadastros e visão geral. No protótipo, essa divisão aparece nos menus. Na aplicação final, ela será aplicada no servidor por decorators ou middleware, porque ocultar um botão não impede uma chamada HTTP direta.
+P0142	STYLE=Normal	O utilitário Fernet existente pode servir para dados que precisem ser recuperados, mas não para senha. Para senha, adotaremos hash unidirecional. Também planejamos logs sem informações sensíveis, mensagens genéricas para falhas de login e validação duplicada no cliente e no servidor.
+P0144	STYLE=Heading 1	17 IDENTIDADE VISUAL E PROTOTIPAÇÃO
+P0145	STYLE=Normal	Nós construímos uma identidade inspirada em materiais e cores gastronômicas. Utilizamos grafite #2B241E para estrutura, fundo #F6F1E8, cobre #BB6B2F como destaque, verde #4B7A52 para sucesso, açafrão #B9832A para atenção e páprica #A6432E para erro. Archivo aparece em títulos e Hanken Grotesk nos elementos de interface.
+P0146	STYLE=Normal	Criamos componentes consistentes: menu lateral, cartões, badges, botões, tabelas, filtros, indicadores, timeline e colunas do KDS. CSS Grid e Flexbox organizam o conteúdo, enquanto media queries adaptam a interface. As imagens das Bancadas e dos produtos aproximam o protótipo de uma experiência de uso real.
+P0147	STYLE=Normal	Ainda precisamos incorporar ao repositório os wireframes e o link/exportação do protótipo Figma. O front-end atual funciona como protótipo navegável codificado e demonstra telas de Cliente, Cozinheiro e Administrador.
+P0148	STYLE=Normal	[INSERIR FIGURA - WIREFRAMES E PROTÓTIPO FIGMA]
+P0150	STYLE=Heading 1	18 REQUISITOS FUNCIONAIS E NÃO FUNCIONAIS
+P0154	STYLE=Heading 1	19 TECNOLOGIAS UTILIZADAS
+P0157	STYLE=Heading 1	20 O QUE CONCLUÍMOS E PRÓXIMAS ETAPAS
+P0158	STYLE=Heading 2	20.1 O que concluímos
+P0159	STYLE=Normal	Concluímos o protótipo estático navegável, a identidade visual, as telas dos três atores, o Cardápio, o carrinho em memória, a visualização de Pedidos, o layout do KDS, o DER, o MER, o arquivo EER e o dicionário de dados. Também definimos o fluxo Reserva → Sessão → Cardápio/Pedidos → KDS e a responsabilidade esperada de cada camada.
+P0160	STYLE=Heading 2	20.2 O que iniciamos
+P0161	STYLE=Normal	Iniciamos a estrutura Python, a criação do banco e um exemplo de comunicação Fetch/JSON. Também iniciamos a definição de segurança e separação de perfis. Essas partes ainda não formam uma API integrada, mas registram a direção que seguiremos.
+P0162	STYLE=Heading 2	20.3 Próximas etapas
+P0163	STYLE=Normal	Nas próximas etapas, implementaremos a factory Flask, os módulos MVC, autenticação e RBAC, as rotas de Bancada e Reserva, a criação de Sessão, Cardápio e Pedido, o KDS persistente e o banco físico. Depois integraremos fetch ao front-end, trataremos loading/erros e criaremos testes para conflitos, permissões, totais e transições de estado.
+P0165	STYLE=Heading 1	21 ATENDIMENTO AOS REQUISITOS DO TERCEIRO BIMESTRE
+P0168	STYLE=Heading 1	REFERÊNCIAS
+P0169	STYLE=Normal	INSTITUTO FEDERAL DE EDUCAÇÃO, CIÊNCIA E TECNOLOGIA DE SÃO PAULO. Projeto Integrador Sabor & Clic: sistema de gestão para dark kitchens e espaços gastronômicos. Versão de 31 de agosto de 2026. São Paulo: IFSP, 2026.
+P0170	STYLE=Normal	SABOR E CLIC. Repositório Sabor-Clic. GitHub, 2026. Disponível em: https://github.com/FaellEmiliano/Sabor-Clic.
+P0171	STYLE=Normal	SABOR E CLIC. Dicionário de Dados Sabor e Clic. São Paulo, 2026.
+
+TABLE 0
+R0: Disciplina || Contribuição realizada || Evolução arquitetural
+R1: Design || Paleta, tipografia, componentes, telas por perfil, Cardápio e KDS. || Fidelidade ao protótipo, acessibilidade e testes de usabilidade.
+R2: JavaScript || Estado local, navegação, DOM, carrinho, cálculos e feedback visual. || Módulos, classes ES6 e integração assíncrona.
+R3: Python e Flask || Arquivos iniciais e definição da API. || MVC, controllers, services e rotas REST em JSON.
+R4: Banco de Dados || DER, MER, EER e dicionário de dados. || Modelo físico, scripts SQL, consultas e triggers.
+R5: Segurança || Definição de perfis e separação visual. || Autenticação, sessão, RBAC no servidor e sanitização.
+
+TABLE 1
+R0: Ator || Objetivo no sistema || Principais ações
+R1: Cliente || Utilizar uma Bancada e consumir durante uma Sessão. || Consultar Bancadas, reservar, abrir Sessão, montar carrinho, enviar e acompanhar Pedidos.
+R2: Cozinheiro || Organizar a produção. || Consultar fila, iniciar preparo, marcar Pedido pronto e entregue, acompanhar tempos.
+R3: Administrador || Configurar e supervisionar a operação. || Gerenciar Bancadas, Reservas, Pratos, Ingredientes, usuários e relatórios.
+
+TABLE 2
+R0: Etapa || Estado de entrada || Processamento || Saída
+R1: Reserva || Bancada disponível. || Validamos período, capacidade e conflito. || Reserva confirmada.
+R2: Sessão || Reserva válida. || Criamos contexto único e ativamos o atendimento. || Sessão ativa.
+R3: Cardápio || Sessão ativa. || Exibimos Pratos disponíveis e mantemos carrinho. || Itens selecionados.
+R4: Pedido || Carrinho válido. || Revalidamos itens, preços e quantidades. || Pedido recebido.
+R5: KDS || Pedido recebido. || Organizamos fila e controlamos transições. || Pedido em preparo, pronto e entregue.
+
+TABLE 3
+R0: Estado || Significado || Próxima ação esperada
+R1: AGUARDANDO ou RECEBIDO || Pedido aceito e visível para a cozinha. || Iniciar preparo ou cancelar conforme regra.
+R2: EM PREPARO || Produção iniciada. || Marcar como pronto.
+R3: PRONTO || Pedido finalizado pela cozinha. || Marcar como entregue.
+R4: ENTREGUE || Ciclo operacional concluído. || Somente consulta histórica.
+R5: CANCELADO || Pedido interrompido. || Somente consulta ou procedimento administrativo.
+
+TABLE 4
+R0: Camada || Responsabilidade || Exemplo
+R1: View || Apresentar conteúdo e capturar eventos. || Cardápio, formulário e KDS.
+R2: JavaScript de página || Gerenciar estado visual e chamar API. || Carrinho, filtros e feedback.
+R3: Routes Flask || Interpretar HTTP, parâmetros e códigos de resposta. || POST /api/reservas.
+R4: Controllers e services || Executar caso de uso e regras. || Verificar conflito e criar Sessão.
+R5: Models e repositórios || Representar e consultar dados. || Reserva, Sessão, Pedido e Prato.
+R6: Banco relacional || Garantir persistência e integridade. || PK, FK, unicidade e transações.
+
+TABLE 5
+R0: Método e rota || Atores || Lógica essencial
+R1: POST /api/auth/login || Todos || Validar credenciais, usuário ativo, criar Sessão de autenticação e retornar perfil.
+R2: GET /api/bancadas || Cliente/Admin || Filtrar capacidade e ausência de conflito no intervalo.
+R3: POST /api/reservas || Cliente/Admin || Revalidar disponibilidade em transação, calcular valor e criar Reserva.
+R4: POST /api/reservas/{id}/sessao || Cliente/Admin || Garantir Reserva válida e Sessão única; gerar código de acesso.
+R5: GET /api/cardapio || Cliente || Listar Pratos ativos e disponíveis.
+R6: POST /api/sessoes/{id}/pedidos || Cliente || Validar Sessão e itens; recalcular preços; gravar Pedido e itens.
+R7: GET /api/kds/pedidos || Cozinheiro/Admin || Listar fila por estado e tempo.
+R8: PATCH /api/pedidos/{id}/status || Cozinheiro/Admin || Validar transição, atualizar estado e horários.
+R9: POST /api/sessoes/{id}/encerrar || Cliente/Admin || Bloquear novos Pedidos e registrar encerramento.
+
+TABLE 6
+R0: Risco || Decisão arquitetural
+R1: Senha exposta || Armazenar hash forte com salt; nunca senha em texto ou cifra reversível.
+R2: Preço manipulado || Recalcular total no Flask a partir do catálogo.
+R3: Reserva duplicada || Validar sobreposição dentro de transação.
+R4: SQL Injection || Utilizar ORM ou consultas parametrizadas.
+R5: XSS || Escapar dados e preferir textContent para conteúdo externo.
+R6: CSRF/cookie || Configurar HttpOnly, Secure, SameSite e proteção CSRF quando aplicável.
+R7: Acesso indevido || Verificar identidade, propriedade do recurso e papel em cada rota.
+
+TABLE 7
+R0: Código || Requisito funcional || Estágio
+R1: RF01 || Entrar e acessar interface correspondente ao papel. || Demonstrado no protótipo; autenticação real é próxima etapa.
+R2: RF02 || Consultar e reservar Bancadas. || Interface concluída; persistência planejada.
+R3: RF03 || Criar, ativar e encerrar Sessão. || Modelado e prototipado.
+R4: RF04 || Consultar Cardápio e manter carrinho. || Implementado em memória.
+R5: RF05 || Criar e acompanhar Pedido. || Interface concluída; API planejada.
+R6: RF06 || Operar fila no KDS. || Layout concluído; atualização persistente planejada.
+R7: RF07 || Administrar catálogo, Ingredientes e usuários. || Telas demonstrativas concluídas; CRUD planejado.
+
+TABLE 8
+R0: Requisito não funcional || Como tratamos
+R1: Usabilidade || Hierarquia, feedback, navegação por perfil e consistência visual.
+R2: Responsividade || Grid, Flexbox e media queries no CSS.
+R3: Manutenibilidade || Planejamento modular de pages, models, api, routes e services.
+R4: Segurança || RBAC, validação no servidor, hash e consultas parametrizadas.
+R5: Integridade || Transações, PK/FK, unicidade e domínios de estado.
+R6: Desempenho || Filtros no servidor, índices futuros e atualização parcial do DOM.
+
+TABLE 9
+R0: Tecnologia || Aplicação no projeto
+R1: HTML5 || Estrutura das páginas e formulários.
+R2: CSS3 || Identidade visual, componentes e responsividade.
+R3: JavaScript ES6+ || DOM, estado, arrays, templates, carrinho e cálculos.
+R4: JSON e Fetch API || Formato e mecanismo definidos para integração; exemplo inicial no back-end.
+R5: Python e Flask || Base escolhida para API, regras e autenticação.
+R6: Banco relacional/MySQL Workbench || DER, MER, EER e futura persistência SQL.
+R7: Git e GitHub || Versionamento e integração do trabalho da equipe.
+
+TABLE 10
+R0: Requisito || Situação || Evidência produzida
+R1: DER || Concluído || DER_saborclic.png, MER_saborclic.png e EER_saborclic.mwb.
+R2: Dicionário de dados || Concluído || Documento em DOCX e PDF com entidades, atributos e relações.
+R3: Wireframes/Figma || Em complementação || Protótipo codificado existe; arquivo ou link Figma deverá ser incluído.
+R4: Identidade visual || Concluída || Paleta, tipografia, marca e componentes em CSS.
+R5: Cardápio Digital || Concluído como protótipo || Produtos, categorias, imagens, disponibilidade e carrinho.
+R6: KDS || Concluído como protótipo || Colunas, tickets, tempos e ações simuladas.
+R7: JavaScript/DOM || Concluído para a etapa || Renderização dinâmica, eventos, arrays, map/filter/reduce e cálculo.
+R8: Validações || Parcial || required e regras locais; validações completas serão repetidas no Flask.
+R9: Flask/MVC/rotas/JSON || Estrutura teórica e início técnico || Arquivos iniciais, exemplo fetch e arquitetura detalhada neste documento.
+R10: Segurança e RBAC || Definido conceitualmente || Papéis e menus; middleware e autenticação serão implementados.
