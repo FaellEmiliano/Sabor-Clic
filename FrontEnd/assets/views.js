@@ -1,134 +1,15 @@
-
-const state = {
-  role: "cliente",
-  page: "cliente_inicio",
-  cart: [
-    {id:2,nome:"Risoto de Cogumelos",preco:42,qtd:1},
-    {id:5,nome:"Suco de Laranja",preco:9.5,qtd:2}
-  ],
-  reservationActive: true
-};
-
-const benches = [
-  {id:1,nome:"Bancada Toscana",cap:4,preco:85,status:"Disponível",recursos:["Cooktop","Pia","Tomadas"],emoji:"🍳",foto:"assets/img/benches/toscana.jpg"},
-  {id:2,nome:"Bancada Provence",cap:6,preco:120,status:"Disponível",recursos:["Cooktop duplo","Forno","Pia"],emoji:"🔥",foto:"assets/img/benches/provence.jpg"},
-  {id:3,nome:"Bancada Aurora",cap:2,preco:65,status:"Ocupada",recursos:["Cooktop","Pia"],emoji:"🥘",foto:"assets/img/benches/aurora.jpg"},
-  {id:4,nome:"Bancada Ipê",cap:5,preco:105,status:"Disponível",recursos:["Cooktop","Air fryer","Pia"],emoji:"🍲",foto:"assets/img/benches/ipe.jpg"},
-  {id:5,nome:"Bancada Cedro",cap:4,preco:95,status:"Manutenção",recursos:["Cooktop","Forno"],emoji:"🧰",foto:"assets/img/benches/cedro.jpg"},
-  {id:6,nome:"Bancada Manacá",cap:3,preco:78,status:"Disponível",recursos:["Cooktop","Pia","Geladeira"],emoji:"🥗",foto:"assets/img/benches/manaca.jpg"}
-];
-
-const products = [
-  {id:1,nome:"Bruschetta da Casa",cat:"Entradas",preco:18.9,ico:"🥖",foto:"assets/img/products/bruschetta.jpg",status:"Disponível",desc:"Pão italiano, tomate, manjericão e azeite."},
-  {id:2,nome:"Risoto de Cogumelos",cat:"Pratos",preco:42,ico:"🍚",foto:"assets/img/products/risoto.jpg",status:"Disponível",desc:"Arroz arbóreo, cogumelos e parmesão."},
-  {id:3,nome:"Burger Artesanal",cat:"Pratos",preco:34.9,ico:"🍔",foto:"assets/img/products/burger.jpg",status:"Disponível",desc:"Brioche, carne, queijo e molho da casa."},
-  {id:4,nome:"Torta de Limão",cat:"Sobremesas",preco:16,ico:"🥧",foto:"assets/img/products/torta-limao.jpg",status:"Disponível",desc:"Base crocante, creme de limão e merengue."},
-  {id:5,nome:"Suco de Laranja",cat:"Bebidas",preco:9.5,ico:"🍊",foto:"assets/img/products/suco-laranja.jpg",status:"Disponível",desc:"Suco natural 400 ml."},
-  {id:6,nome:"Soda Italiana",cat:"Bebidas",preco:13,ico:"🥤",foto:"assets/img/products/soda-italiana.jpg",status:"Disponível",desc:"Maçã verde ou frutas vermelhas."},
-  {id:7,nome:"Nhoque ao Sugo",cat:"Pratos",preco:37,ico:"🍝",foto:"assets/img/products/nhoque.jpg",status:"Indisponível",desc:"Nhoque artesanal com molho de tomate."},
-  {id:8,nome:"Petit Gâteau",cat:"Sobremesas",preco:19.5,ico:"🍫",foto:"assets/img/products/petit-gateau.jpg",status:"Disponível",desc:"Chocolate quente com sorvete."}
-];
-
-const menus = {
-  cliente:[
-    ["cliente_inicio","⌂","Início"],
-    ["cliente_bancadas","▦","Bancadas"],
-    ["cliente_reservas","▣","Minhas reservas"],
-    ["cliente_sessao","◉","Sessão atual"],
-    ["cliente_cardapio","☰","Cardápio"],
-    ["cliente_carrinho","🛒","Carrinho"],
-    ["cliente_pedidos","✓","Meus pedidos"],
-    ["cliente_perfil","⚙","Meu perfil"]
-  ],
-  cozinha:[
-    ["cozinha_dashboard","⌂","Visão geral"],
-    ["cozinha_kds","▦","KDS"],
-    ["cozinha_pedidos","☷","Pedidos"],
-    ["cozinha_estoque","◫","Disponibilidade"],
-    ["cozinha_historico","↺","Histórico"]
-  ],
-  admin:[
-    ["admin_dashboard","⌂","Dashboard"],
-    ["admin_reservas","▣","Reservas"],
-    ["admin_bancadas","▦","Bancadas"],
-    ["admin_produtos","☰","Produtos"],
-    ["admin_ingredientes","◫","Ingredientes"],
-    ["admin_substituicoes","⇄","Substituições"],
-    ["admin_usuarios","♟","Usuários"],
-    ["admin_relatorios","▤","Relatórios"]
-  ]
-};
-
-const roleInfo = {
-  cliente:{name:"Rafael Gomes",role:"Cliente",avatar:"RG",email:"rafael@exemplo.com"},
-  cozinha:{name:"Marina Souza",role:"Cozinheira",avatar:"MS",email:"marina@saboreclic.com"},
-  admin:{name:"Ana Martins",role:"Administradora",avatar:"AM",email:"ana@saboreclic.com"}
-};
-
-function findRoleByEmail(email){
-  const e=(email||"").trim().toLowerCase();
-  for(const r in roleInfo){ if(roleInfo[r].email.toLowerCase()===e) return r; }
-  return null;
-}
-function fillLogin(email){
-  el("loginEmail").value=email;
-  el("loginPassword").value="demo1234";
-}
-function handleLogin(event){
-  event.preventDefault();
-  const email=el("loginEmail").value;
-  const role=findRoleByEmail(email);
-  const errBox=el("loginError");
-  if(!role){
-    errBox.textContent="Não encontramos essa conta. Use uma das contas de demonstração abaixo.";
-    errBox.classList.add("show");
-    return false;
-  }
-  errBox.classList.remove("show");
-  enterApp(role);
-  return false;
-}
-function handleLogout(){
-  el("appShell").classList.add("hidden");
-  el("loginScreen").classList.remove("hidden");
-  el("loginForm").reset();
-  el("loginError").classList.remove("show");
-}
-function enterApp(role){
-  state.role=role;state.page=menus[role][0][0];
-  const info=roleInfo[role];
-  el("userName").textContent=info.name;el("userRole").textContent=info.role;el("avatar").textContent=info.avatar;
-  el("loginScreen").classList.add("hidden");
-  el("appShell").classList.remove("hidden");
-  renderMenu();render();
-}
-
-function money(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-function el(id){return document.getElementById(id)}
-function showToast(msg){
-  const t=el("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)
-}
-function renderMenu(){
-  el("menu").innerHTML=menus[state.role].map(([id,icon,label])=>`
-    <button class="${state.page===id?'active':''}" onclick="go('${id}')"><span>${icon}</span><span>${label}</span></button>
-  `).join("");
-}
-function go(page){
-  state.page=page;renderMenu();render();window.scrollTo(0,0);
-}
-function pageTitle(){
-  const item=menus[state.role].find(x=>x[0]===state.page);
-  const role={cliente:"Cliente",cozinha:"Cozinha",admin:"Admin"}[state.role];
-  el("crumb").textContent=`${role} / ${item?item[2]:""}`;
-}
-function toggleSidebar(){el("sidebar").classList.toggle("open")}
 function addCart(id){
   const p=products.find(x=>x.id===id); if(p.status!=="Disponível") return;
   const ex=state.cart.find(x=>x.id===id);
   if(ex) ex.qtd++; else state.cart.push({id:p.id,nome:p.nome,preco:p.preco,qtd:1});
+  saveCart();
   showToast("Item adicionado ao carrinho.");
 }
-function delCart(id){state.cart=state.cart.filter(x=>x.id!==id);render()}
+function delCart(id){
+  state.cart=state.cart.filter(x=>x.id!==id);
+  saveCart();
+  renderCurrentPage("cliente_carrinho");
+}
 function cartTotal(){return state.cart.reduce((s,i)=>s+i.preco*i.qtd,0)}
 
 function head(title,desc,action=""){
@@ -162,7 +43,6 @@ function productCard(p){
     <div class="detail-row"><span class="price">${money(p.preco)}</span><button class="btn" ${p.status!=="Disponível"?"disabled":""} onclick="addCart(${p.id})">Adicionar</button></div>
   </div>`
 }
-
 const views = {
 cliente_inicio:()=>`
   <section class="hero">
@@ -418,16 +298,7 @@ function ingredient(nome,atual,minimo,status){
 function ticket(id,bancada,tempo,itens,acao,status){
   return `<div class="ticket"><div class="detail-row"><h4>${id}</h4><span class="badge ${status}">${bancada}</span></div><p class="timer">${tempo}</p><ul>${itens.map(i=>`<li>${i}</li>`).join("")}</ul><button class="btn ${status==="danger"?"danger":"secondary"} full" onclick="showToast('${acao} — simulado.')">${acao}</button></div>`
 }
-function render(){
-  pageTitle();
-  el("app").innerHTML=views[state.page]();
+
+function renderCurrentPage(pageId){
+  el("app").innerHTML = views[pageId]();
 }
-function initRole(){
-  const r=window.INITIAL_ROLE && menus[window.INITIAL_ROLE] ? window.INITIAL_ROLE : null;
-  if(r){
-    enterApp(r);
-  }
-  // else: no INITIAL_ROLE set — the login screen stays visible and enterApp()
-  // runs once handleLogin() finds a matching demo account.
-}
-initRole();
