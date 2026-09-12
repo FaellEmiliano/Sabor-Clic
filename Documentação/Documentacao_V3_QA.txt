@@ -2,7 +2,7 @@ Title:           Documentação do Projeto Integrador Sabor e Clic Terceiro Bime
 Author:          Equipe Sabor e Clic
 Creator:         Writer
 Producer:        LibreOffice 24.2
-CreationDate:    Sat Sep 12 02:17:35 2026 UTC
+CreationDate:    Sat Sep 12 02:19:43 2026 UTC
 Custom Metadata: no
 Metadata Stream: no
 Tagged:          yes
@@ -10,10 +10,10 @@ UserProperties:  no
 Suspects:        no
 Form:            none
 JavaScript:      no
-Pages:           21
+Pages:           20
 Encrypted:       no
 Page size:       595.304 x 841.89 pts (A4)
 Page rot:        0
-File size:       343077 bytes
+File size:       320642 bytes
 Optimized:       no
 PDF version:     1.7
