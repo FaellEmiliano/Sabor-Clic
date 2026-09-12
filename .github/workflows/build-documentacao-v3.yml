@@ -1,0 +1,37 @@
+name: Gerar documentacao V3 sobre base antiga
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.docv3/TRIGGER'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: |
+          pip install python-docx
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libreoffice poppler-utils
+      - name: Gerar DOCX sobre a base revisada
+        run: python 'Documentação/refazer_documentacao_sobre_base_antiga.py'
+      - name: Renderizar e validar
+        run: |
+          mkdir -p /tmp/docv3
+          libreoffice --headless --convert-to pdf --outdir /tmp/docv3 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.docx'
+          pdfinfo /tmp/docv3/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf > 'Documentação/Documentacao_V3_QA.txt'
+          cp /tmp/docv3/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf'
+      - name: Publicar resultado
+        run: |
+          rm -rf .docv3
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.docx' 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf' 'Documentação/Documentacao_V3_QA.txt' .docv3
+          git commit -m 'docs: refaz documentacao integrada sobre a base revisada' || exit 0
+          git push
