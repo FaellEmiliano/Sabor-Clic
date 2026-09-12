@@ -1,9 +1,5 @@
 from docx import Document
-from docx.shared import Pt, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
 from pathlib import Path
 
 BASE = Path('Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_Revisada.docx')
@@ -11,240 +7,197 @@ OUT = Path('Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada
 
 doc = Document(BASE)
 
-# Padroniza a terminologia atual sem desmontar a estrutura original.
-def replace_text_in_paragraph(p, replacements):
+# -------------------- helpers --------------------
+def replace_terms_in_paragraph(p):
+    repl = {'Party':'Sessão', 'PARTY':'SESSÃO', 'party':'sessão'}
     for run in p.runs:
-        txt = run.text
-        for old, new in replacements.items():
-            txt = txt.replace(old, new)
-        run.text = txt
-
-replacements = {
-    'Party': 'Sessão',
-    'PARTY': 'SESSÃO',
-    'party': 'sessão',
-}
+        text = run.text
+        for old, new in repl.items():
+            text = text.replace(old, new)
+        run.text = text
 
 for p in doc.paragraphs:
-    replace_text_in_paragraph(p, replacements)
+    replace_terms_in_paragraph(p)
 for table in doc.tables:
     for row in table.rows:
         for cell in row.cells:
             for p in cell.paragraphs:
-                replace_text_in_paragraph(p, replacements)
+                replace_terms_in_paragraph(p)
 
-# Mantém a documentação anterior integral e acrescenta a atualização consolidada.
-doc.add_page_break()
-
-p = doc.add_paragraph()
-p.style = doc.styles['Heading 1'] if 'Heading 1' in doc.styles else doc.styles['Normal']
-r = p.add_run('ATUALIZAÇÃO DA IMPLEMENTAÇÃO — 3º BIMESTRE')
-r.bold = True
-
-p = doc.add_paragraph()
-p.add_run(
-    'Esta seção atualiza a documentação original com o estado mais recente do projeto, '
-    'integrando o protótipo estático do front-end, os scripts JavaScript exigidos no terceiro '
-    'bimestre e a estrutura inicial do back-end Flask. O objetivo desta etapa continua sendo '
-    'demonstrar arquitetura, fluxos e regras fundamentais com dados simulados, sem antecipar '
-    'a integração completa prevista para o quarto bimestre.'
-)
-
-# 1. Visão integrada
-h = doc.add_heading('1. Visão integrada da implementação atual', level=2)
-for text in [
-    'A aplicação está organizada em três camadas principais: interface HTML/CSS, lógica de interação em JavaScript e estrutura inicial de back-end em Flask.',
-    'No estado atual, o front-end utiliza dados simulados e armazenamento local para demonstrar os fluxos. O back-end define contratos de endpoints e modelos simulados, ainda sem persistência definitiva no banco de dados.',
-    'A arquitetura definitiva manterá o mesmo fluxo conceitual: Reserva → Sessão → Cardápio/Carrinho → Pedido → KDS. A integração real entre JavaScript e Flask será feita por Fetch API e JSON no quarto bimestre.'
-]:
-    doc.add_paragraph(text)
-
-# 2. Front-end
-h = doc.add_heading('2. Front-end atual', level=2)
-doc.add_paragraph(
-    'O front-end está estruturado como uma aplicação multipágina (MPA), com páginas separadas por perfil de usuário. '
-    'As telas usam os mesmos componentes visuais e dados simulados para manter consistência entre cliente, cozinha e administração.'
-)
+def replace_paragraph(startswith, new_text):
+    for p in doc.paragraphs:
+        if p.text.strip().startswith(startswith):
+            p.clear()
+            p.add_run(new_text)
+            return True
+    return False
 
 def add_bullets(items):
     for item in items:
         p = doc.add_paragraph(style='List Bullet' if 'List Bullet' in doc.styles else 'Normal')
         p.add_run(item)
 
+# -------------------- atualiza trechos já existentes --------------------
+replace_paragraph(
+    'Ao longo do terceiro bimestre, reunimos contribuições',
+    'Ao longo do terceiro bimestre, reunimos contribuições de Artes Visuais e Design, JavaScript, Python, Banco de Dados e Segurança. O front-end evoluiu para uma aplicação multipágina navegável com telas específicas para Cliente, Cozinheiro e Administrador. Também modularizamos a lógica JavaScript e implementamos um back-end Flask simulado, com estrutura inicial da aplicação e endpoints fundamentais. A persistência definitiva e a comunicação real por Fetch/JSON permanecem para o quarto bimestre.'
+)
+replace_paragraph(
+    'Nesta etapa concluímos o protótipo estático e a documentação conceitual de dados.',
+    'Nesta etapa concluímos o protótipo navegável, a documentação conceitual de dados, as lógicas JavaScript exigidas no terceiro bimestre e uma estrutura inicial de back-end Flask com endpoints simulados. A aplicação ainda não persiste os dados do fluxo completo nem realiza integração real entre navegador e servidor; essa evolução será feita no quarto bimestre.'
+)
+replace_paragraph(
+    'O README registra uma estrutura futura modular, com routes, controllers, models, services e middleware.',
+    'O projeto adota separação por responsabilidades. No front-end, a lógica foi dividida em arquivos específicos para dados, navegação, componentes, cardápio, carrinho, validação, login, views e acessibilidade. No back-end simulado, run.py inicializa o Flask, config.py concentra configurações e os controllers exemplificam autenticação, reservas, cardápio, pedidos e KDS. A estrutura completa com routes, services, models e middleware permanece como evolução arquitetural.'
+)
+replace_paragraph(
+    'O objeto state concentra perfil, página atual, carrinho e estado de Reserva.',
+    'O JavaScript atual foi dividido por responsabilidade. data.js concentra arrays, objetos literais e estado compartilhado; site.js reúne navegação e helpers; components.js gera componentes visuais; catalog.js manipula dinamicamente o DOM do cardápio; cart.js mantém o carrinho e calcula totais; validation.js valida a reserva; login.js trata o login demonstrativo; views.js registra as telas; e a11y.js concentra comportamentos de acessibilidade. A navegação ocorre entre páginas HTML separadas, caracterizando uma MPA.'
+)
+replace_paragraph(
+    'function go(page){',
+    'function renderCatalog(category = "Todos") {\n  const grid = document.querySelector(".grid.cols-4");\n  grid.innerHTML = "";\n  products.forEach(product => {\n    if (category !== "Todos" && product.cat !== category) return;\n    const wrapper = document.createElement("div");\n    wrapper.innerHTML = productCard(product).trim();\n    grid.appendChild(wrapper.firstElementChild);\n  });\n}'
+)
+replace_paragraph(
+    'Trecho 3 - Navegação e renderização dinâmica do protótipo.',
+    'Trecho 3 - Renderização dinâmica do Cardápio utilizando forEach e manipulação do DOM.'
+)
+replace_paragraph(
+    'Utilizamos const, arrow functions, template literals, map, filter, reduce, find e for...in.',
+    'Utilizamos arrays, objetos literais, const, arrow functions, template literals, find, filter, reduce, forEach, for...of e for...in. O Cardápio é atualizado dinamicamente pelo DOM; o carrinho mantém itens e calcula subtotais e total em memória; os formulários possuem validações simples; e o login demonstrativo seleciona o perfil e armazena a sessão localmente. Esses elementos cobrem os conteúdos de JavaScript previstos para o terceiro bimestre.'
+)
+replace_paragraph(
+    'Na próxima etapa, pretendemos separar modelos, API e páginas.',
+    'No quarto bimestre, a modularização será ampliada com classes ES6+, encapsulamento e módulos voltados à comunicação com a API. As chamadas Fetch serão assíncronas, utilizarão JSON e serão tratadas com async/await e try/catch. O estado que hoje é simulado no navegador passará a refletir as respostas reais do Flask.'
+)
+replace_paragraph(
+    'As rotas a seguir representam a arquitetura que definimos para completar o produto.',
+    'O back-end do terceiro bimestre é propositalmente simulado. Ele já possui run.py, config.py, app/__init__.py e controllers de autenticação, reserva e pedidos. Esses arquivos demonstram os endpoints fundamentais e a separação de responsabilidades, mas os models ainda são stubs e a API não está integrada ao banco ou ao front-end. O objetivo desta etapa é validar o contrato das operações antes da implementação definitiva.'
+)
+replace_paragraph(
+    '@bp.post("/api/sessoes/<int:id>/pedidos")',
+    '# .../api/reservas - método POST\ndef post_reserva(dados):\n    cliente = dados["cliente"]\n    bancada = dados["bancada"]\n    Reserva_model.post_reserva(cliente, bancada)\n    return True, 200'
+)
+replace_paragraph(
+    'Trecho 4 - Exemplo teórico da responsabilidade reduzida de uma rota Flask.',
+    'Trecho 4 - Exemplo atual do back-end simulado para criação de Reserva.'
+)
+replace_paragraph(
+    'Nesse exemplo, a rota não calcula preços nem consulta estoque diretamente.',
+    'O exemplo atual demonstra o contrato básico de uma operação: receber dados, encaminhá-los para a camada responsável e devolver resultado e código HTTP. Nesta primeira entrega, os models são simulados. Na implementação definitiva, controllers e services aplicarão autenticação, validação, regras de negócio e transações antes de acessar o banco.'
+)
+replace_paragraph(
+    'Concluímos o protótipo estático navegável, a identidade visual, as telas dos três atores',
+    'Concluímos o protótipo navegável, a identidade visual, as telas dos três atores, o Cardápio, o carrinho em memória, a visualização de Pedidos, o layout do KDS, o DER, o MER, o arquivo EER e o dicionário de dados. Também modularizamos o JavaScript para evidenciar arrays, objetos, for...of, for...in, forEach, DOM, validações e cálculos em memória, e estruturamos um back-end Flask simulado com endpoints fundamentais.'
+)
+replace_paragraph(
+    'Iniciamos a estrutura Python, a criação do banco e um exemplo de comunicação Fetch/JSON.',
+    'Implementamos uma primeira estrutura Flask com configuração da aplicação e controllers simulados para cadastro/login, Bancadas/Reservas e Cardápio/Pedidos/KDS. Esses endpoints ainda não formam uma API persistente, mas já estabelecem os contratos que serão ligados ao front-end. A autenticação real, o banco físico e Fetch/JSON continuam como próxima etapa.'
+)
+replace_paragraph(
+    'Nas próximas etapas, implementaremos a factory Flask, os módulos MVC, autenticação e RBAC',
+    'Nas próximas etapas, completaremos a factory Flask e a separação MVC, substituiremos os models simulados por persistência real, implementaremos autenticação e RBAC, criaremos a Sessão persistente, integraremos Cardápio/Pedido/KDS ao banco e conectaremos o front-end à API por Fetch/JSON. Depois serão acrescentados tratamento de loading/erros e testes para conflitos, permissões, totais e transições de estado.'
+)
+
+# Atualiza tabela interdisciplinar existente.
+if doc.tables:
+    t = doc.tables[0]
+    for row in t.rows[1:]:
+        key = row.cells[0].text.strip()
+        if key == 'JavaScript':
+            row.cells[1].text = 'MPA navegável, módulos JS, arrays/objetos, loops modernos, DOM, validações, carrinho e cálculos em memória.'
+            row.cells[2].text = 'Classes ES6+, módulos de API, Fetch/JSON, async/await e integração com Flask.'
+        elif key == 'Python e Flask':
+            row.cells[1].text = 'Estrutura Flask inicial e endpoints simulados para autenticação, Reservas, Cardápio, Pedidos e KDS.'
+            row.cells[2].text = 'MVC completo, services/models reais, banco persistente, autenticação e rotas protegidas.'
+
+# -------------------- nova seção complementar, sem remover imagens/conteúdo antigo --------------------
+doc.add_page_break()
+doc.add_heading('22 ESTADO ATUAL DA IMPLEMENTAÇÃO E INTEGRAÇÃO', level=1)
+doc.add_paragraph(
+    'Esta seção consolida o estado do repositório após a evolução do terceiro bimestre. Ela complementa os capítulos anteriores sem substituir a modelagem, as figuras, os protótipos e as decisões já documentadas.'
+)
+
+doc.add_heading('22.1 Páginas atuais do front-end', level=2)
 add_bullets([
-    'Acesso: index.html (login simulado).',
-    'Cliente: início, bancadas, reservas, sessão, cardápio, carrinho e pedidos.',
-    'Cozinha: dashboard, KDS, pedidos, disponibilidade do cardápio/estoque e histórico.',
-    'Administrador: dashboard, reservas, bancadas, produtos, ingredientes, substituições, usuários e relatórios.'
+    'Acesso: index.html.',
+    'Cliente: cliente_inicio.html, cliente_bancadas.html, cliente_reservas.html, cliente_sessao.html, cliente_cardapio.html, cliente_carrinho.html e cliente_pedidos.html.',
+    'Cozinha: cozinha_dashboard.html, cozinha_kds.html, cozinha_pedidos.html, cozinha_estoque.html e cozinha_historico.html.',
+    'Administrador: admin_dashboard.html, admin_reservas.html, admin_bancadas.html, admin_produtos.html, admin_ingredientes.html, admin_substituicoes.html, admin_usuarios.html e admin_relatorios.html.'
 ])
 
+doc.add_heading('22.2 Módulos JavaScript atuais', level=2)
+t = doc.add_table(rows=1, cols=3)
+t.style = 'Table Grid'; t.alignment = WD_TABLE_ALIGNMENT.CENTER
+for i,v in enumerate(['Arquivo','Responsabilidade','Requisito demonstrado']): t.rows[0].cells[i].text=v
+for row in [
+    ('data.js','Dados simulados e estado','arrays, objetos, for...in'),
+    ('site.js','Navegação, helpers e sessão local','DOM, eventos e localStorage'),
+    ('components.js','Componentes reutilizáveis','for...of e templates'),
+    ('catalog.js','Cardápio dinâmico','forEach e manipulação do DOM'),
+    ('cart.js','Carrinho e totais','find/filter/reduce/forEach e cálculos'),
+    ('validation.js','Validação da Reserva','for...of e validação'),
+    ('login.js','Login demonstrativo','validação e perfis'),
+    ('views.js','Templates das páginas','renderização do protótipo'),
+    ('a11y.js','Acessibilidade','comportamentos auxiliares')
+]:
+    cells=t.add_row().cells
+    for i,v in enumerate(row): cells[i].text=v
+
+doc.add_heading('22.3 Endpoints do back-end simulado', level=2)
+t = doc.add_table(rows=1, cols=4)
+t.style = 'Table Grid'; t.alignment = WD_TABLE_ALIGNMENT.CENTER
+for i,v in enumerate(['Método','Endpoint','Finalidade','Estado']): t.rows[0].cells[i].text=v
+for row in [
+    ('POST','/api/cadastro','Cadastrar cliente','Simulado'),
+    ('GET','/api/cadastro/<id>','Consultar usuário','Simulado'),
+    ('POST','/api/login','Validar login','Simulado'),
+    ('GET','/api/bancadas','Listar Bancadas','Simulado'),
+    ('POST','/api/reservas','Criar Reserva','Simulado'),
+    ('GET','/api/reservas/<id>','Consultar Reserva','Simulado'),
+    ('GET','/api/cardapio','Listar Cardápio','Simulado'),
+    ('POST','/api/pedido/cadastro','Criar Pedido vinculado à Reserva','Simulado'),
+    ('GET','/api/pedido/<id>','Consultar Pedido','Simulado'),
+    ('GET','/api/kds/<id>','Gerar consulta para o KDS','Simulado')
+]:
+    cells=t.add_row().cells
+    for i,v in enumerate(row): cells[i].text=v
+
+doc.add_heading('22.4 Integração conceitual entre os sistemas', level=2)
+for text in [
+    '1. O Cliente seleciona uma Bancada e envia os dados da Reserva.',
+    '2. A Reserva cria o contexto que dará origem à Sessão.',
+    '3. A Sessão ativa permitirá acesso ao Cardápio e criação de Pedidos.',
+    '4. O JavaScript mantém o carrinho e apresenta os cálculos ao usuário.',
+    '5. No quarto bimestre, o navegador enviará apenas identificadores e quantidades; o Flask recalculará preços e persistirá Pedido e itens.',
+    '6. O KDS consumirá os Pedidos persistidos e enviará alterações de estado ao servidor.'
+]: doc.add_paragraph(text)
+
+doc.add_heading('22.5 Limite da simulação e evolução para o quarto bimestre', level=2)
 doc.add_paragraph(
-    'Essas páginas funcionam como protótipo navegável da aplicação final e permitem demonstrar os principais fluxos sem depender do banco de dados ou do servidor Flask.'
+    'A filosofia adotada nesta entrega é demonstrar os conceitos estudados com exemplos simples e coerentes com a arquitetura final. O front-end usa mocks e localStorage; o Flask usa controllers e models simulados. O objetivo não é antecipar o sistema completo, mas evitar código descartável: os mesmos conceitos de Reserva, Sessão, Cardápio, Pedido e KDS serão mantidos quando a persistência, Fetch/JSON, autenticação e regras completas forem implementados.'
 )
 
-# 3. JavaScript
-h = doc.add_heading('3. JavaScript — lógica do 3º bimestre', level=2)
-doc.add_paragraph(
-    'A lógica JavaScript foi separada por responsabilidade para evitar um arquivo monolítico e tornar explícitos os conteúdos avaliados no terceiro bimestre.'
-)
+doc.add_heading('22.6 Situação dos requisitos principais do terceiro bimestre', level=2)
+t = doc.add_table(rows=1, cols=3)
+t.style='Table Grid'; t.alignment=WD_TABLE_ALIGNMENT.CENTER
+for i,v in enumerate(['Requisito','Situação','Evidência atual']): t.rows[0].cells[i].text=v
+for row in [
+    ('DER e dicionário de dados','Concluído','Arquivos e figuras já incorporados à documentação.'),
+    ('Protótipo navegável','Concluído','Páginas de Cliente, Cozinha e Administrador.'),
+    ('Cardápio Digital','Concluído como protótipo funcional','cliente_cardapio.html + catalog.js.'),
+    ('KDS','Concluído como protótipo visual','cozinha_kds.html + views.js.'),
+    ('Arrays e objetos','Concluído','data.js.'),
+    ('for...of / for...in / forEach','Concluído','components.js, data.js, catalog.js e cart.js.'),
+    ('DOM dinâmico','Concluído','catalog.js e scripts de interface.'),
+    ('Validação de formulários','Concluído em nível inicial','validation.js e login.js.'),
+    ('Cálculos em memória','Concluído','cart.js.'),
+    ('Estrutura Flask','Concluída em nível inicial','run.py, config.py e app.'),
+    ('Endpoints fundamentais','Concluídos como simulação','controllers Flask.'),
+    ('Fetch/JSON integrado','Próxima etapa','Previsto para o quarto bimestre.')
+]:
+    cells=t.add_row().cells
+    for i,v in enumerate(row): cells[i].text=v
 
-table = doc.add_table(rows=1, cols=3)
-table.alignment = WD_TABLE_ALIGNMENT.CENTER
-table.style = 'Table Grid'
-for i, text in enumerate(['Arquivo', 'Responsabilidade', 'Conteúdos demonstrados']):
-    table.rows[0].cells[i].text = text
-rows = [
-    ('data.js', 'Dados simulados e estado compartilhado', 'arrays, objetos literais, for...in'),
-    ('site.js', 'Navegação, sessão simulada e helpers gerais', 'DOM, localStorage, eventos'),
-    ('components.js', 'Componentes visuais reutilizáveis', 'for...of, templates e composição de interface'),
-    ('catalog.js', 'Renderização dinâmica e filtros do cardápio', 'forEach, arrays e DOM'),
-    ('cart.js', 'Carrinho e cálculos em memória', 'find, filter, reduce, forEach, subtotal e total'),
-    ('validation.js', 'Validação da reserva', 'for...of, validação de entradas e feedback ao usuário'),
-    ('login.js', 'Login de demonstração', 'validação de formulário e seleção de perfil'),
-    ('views.js', 'Registro das telas do protótipo', 'renderização das páginas e dados simulados'),
-    ('a11y.js', 'Acessibilidade de interface', 'comportamentos auxiliares e navegação acessível'),
-]
-for row in rows:
-    cells = table.add_row().cells
-    for i, val in enumerate(row):
-        cells[i].text = val
-
-doc.add_paragraph(
-    'Nesta etapa, Fetch API, async/await, tratamento de erros HTTP e classes ES6+ não são necessários para a entrega. '
-    'Esses recursos serão utilizados na integração real com o back-end no quarto bimestre.'
-)
-
-# 4. Fluxos JS simulados
-h = doc.add_heading('4. Fluxos funcionais demonstrados no front-end', level=2)
-add_bullets([
-    'Cardápio: produtos armazenados em arrays de objetos são renderizados dinamicamente no DOM e podem ser filtrados por categoria.',
-    'Carrinho: itens podem ser adicionados e removidos; quantidades, subtotais e valor total são calculados em memória.',
-    'Reserva: o formulário executa validações simples antes de apresentar confirmação simulada.',
-    'Perfis: o login utiliza contas de demonstração e localStorage para direcionar cliente, cozinheiro e administrador às respectivas áreas.',
-    'KDS: a interface demonstra visualmente a fila de pedidos e seus estados, ainda sem sincronização real com o servidor.'
-])
-
-# 5. Backend simulado
-h = doc.add_heading('5. Back-end Flask simulado', level=2)
-doc.add_paragraph(
-    'O back-end do terceiro bimestre tem caráter estrutural. Ele demonstra como a aplicação Flask será organizada e quais '
-    'endpoints fundamentais existirão, mas utiliza modelos simulados e ainda não realiza persistência definitiva.'
-)
-add_bullets([
-    'run.py: ponto de inicialização do servidor Flask.',
-    'config.py: concentra configurações principais da aplicação.',
-    'app/__init__.py: criação/configuração inicial da aplicação.',
-    'controller/auth_controller.py: exemplos de cadastro, consulta de usuário e login.',
-    'controller/reserva_controller.py: consulta de bancadas e criação/consulta de reservas.',
-    'controller/pedidos_controller.py: cardápio, criação/consulta de pedidos e consulta do KDS.'
-])
-
-# 6. Endpoints
-h = doc.add_heading('6. Endpoints fundamentais definidos', level=2)
-table = doc.add_table(rows=1, cols=4)
-table.alignment = WD_TABLE_ALIGNMENT.CENTER
-table.style = 'Table Grid'
-for i, text in enumerate(['Método', 'Endpoint', 'Finalidade', 'Estado atual']):
-    table.rows[0].cells[i].text = text
-endpoints = [
-    ('POST', '/api/cadastro', 'Cadastrar cliente', 'Simulado'),
-    ('GET', '/api/cadastro/<id>', 'Consultar usuário por ID', 'Simulado'),
-    ('POST', '/api/login', 'Validar login', 'Simulado'),
-    ('GET', '/api/bancadas', 'Listar bancadas', 'Simulado'),
-    ('POST', '/api/reservas', 'Criar reserva', 'Simulado'),
-    ('GET', '/api/reservas/<id>', 'Consultar reserva', 'Simulado'),
-    ('GET', '/api/cardapio', 'Obter cardápio', 'Simulado'),
-    ('POST', '/api/pedido/cadastro', 'Criar pedido vinculado à reserva', 'Simulado'),
-    ('GET', '/api/pedido/<id>', 'Consultar pedido', 'Simulado'),
-    ('GET', '/api/kds/<id>', 'Obter representação do pedido para o KDS', 'Simulado'),
-]
-for row in endpoints:
-    cells = table.add_row().cells
-    for i, val in enumerate(row):
-        cells[i].text = val
-
-# 7. Integração conceitual
-h = doc.add_heading('7. Integração entre os sistemas', level=2)
-doc.add_paragraph(
-    'Mesmo com front-end e back-end ainda simulados, os dois lados foram organizados para representar o mesmo domínio. '
-    'O front-end já apresenta as telas e ações que futuramente chamarão os endpoints Flask, enquanto o back-end define '
-    'os contratos básicos correspondentes.'
-)
-
-flow = [
-    '1. O cliente seleciona uma bancada e informa os dados da reserva.',
-    '2. A reserva representa o vínculo entre cliente, bancada e período de uso.',
-    '3. A reserva dá acesso a uma Sessão, que será o contexto de uso durante o período reservado.',
-    '4. Na Sessão, o cliente consulta o cardápio e monta o carrinho.',
-    '5. Ao finalizar, o pedido é criado associado à reserva/sessão.',
-    '6. O pedido passa a ser exibido no KDS do cozinheiro.',
-    '7. No sistema completo, alterações de estado feitas no KDS serão persistidas no back-end e refletidas no front-end.'
-]
-for item in flow:
-    doc.add_paragraph(item)
-
-# 8. Contratos futuros
-h = doc.add_heading('8. Contratos previstos para a integração no 4º bimestre', level=2)
-doc.add_paragraph(
-    'A implementação atual evita criar uma API descartável. Os dados simulados já seguem uma estrutura próxima da versão final, '
-    'permitindo substituir gradualmente os mocks por requisições HTTP.'
-)
-add_bullets([
-    'Reserva: cliente, bancada, data, horário e quantidade de pessoas.',
-    'Pedido: identificador da reserva/sessão e lista de itens com quantidade.',
-    'Cardápio: identificador, nome, categoria, descrição, preço e disponibilidade.',
-    'KDS: pedido, itens, bancada/sessão, horário e estado de preparo.'
-])
-
-# 9. Segurança
-h = doc.add_heading('9. Segurança na etapa atual', level=2)
-doc.add_paragraph(
-    'O login e o controle de perfis atuais têm função exclusivamente demonstrativa e utilizam localStorage. '
-    'Eles não representam autenticação segura. No quarto bimestre, a autenticação será transferida para Flask, '
-    'com sessões/cookies, controle de acesso por perfil (RBAC), validação também no servidor e consultas parametrizadas ao banco.'
-)
-
-# 10. Atendimento aos requisitos
-h = doc.add_heading('10. Atendimento aos requisitos do 3º bimestre', level=2)
-table = doc.add_table(rows=1, cols=3)
-table.alignment = WD_TABLE_ALIGNMENT.CENTER
-table.style = 'Table Grid'
-for i, text in enumerate(['Requisito', 'Situação', 'Evidência']):
-    table.rows[0].cells[i].text = text
-reqs = [
-    ('DER conceitual', 'Concluído', 'Documentação existente e arquivo do brModelo'),
-    ('Dicionário de dados', 'Concluído', 'Documento específico na pasta Documentação'),
-    ('Protótipo e páginas principais', 'Concluído', 'FrontEnd com áreas de cliente, cozinha e administrador'),
-    ('Cardápio digital', 'Concluído como protótipo funcional', 'cliente_cardapio.html + catalog.js'),
-    ('KDS', 'Concluído como protótipo visual', 'cozinha_kds.html / views.js'),
-    ('Arrays e objetos literais', 'Concluído', 'data.js'),
-    ('for...of / for...in / forEach', 'Concluído', 'components.js, data.js, catalog.js/cart.js'),
-    ('Manipulação dinâmica do DOM', 'Concluído', 'catalog.js e scripts de interface'),
-    ('Validação de formulários', 'Concluído em nível inicial', 'validation.js e login.js'),
-    ('Cálculos em memória', 'Concluído', 'cart.js'),
-    ('Estrutura Flask', 'Concluída em nível inicial', 'run.py, config.py e app'),
-    ('Endpoints fundamentais', 'Concluídos como exemplos simulados', 'controllers do back-end'),
-    ('Integração JS ↔ Flask', 'Planejada para o 4º bimestre', 'Fetch/JSON ainda não conectados'),
-]
-for row in reqs:
-    cells = table.add_row().cells
-    for i, val in enumerate(row):
-        cells[i].text = val
-
-# 11. Estado final da etapa
-h = doc.add_heading('11. Estado da primeira entrega e próximos passos', level=2)
-doc.add_paragraph(
-    'Ao final do terceiro bimestre, o projeto possui modelagem de dados, identidade e protótipos das interfaces, '
-    'uma aplicação front-end navegável com lógicas JavaScript fundamentais e uma estrutura de back-end Flask que '
-    'define os principais contratos do sistema. A etapa seguinte substituirá progressivamente os dados simulados por '
-    'persistência real, integrará o front-end ao Flask por Fetch API e aplicará autenticação, autorização e regras de negócio completas.'
-)
-
-# Normalização leve apenas nos novos parágrafos não tabelares, sem tocar imagens.
-for p in doc.paragraphs:
-    if p.text.startswith('ATUALIZAÇÃO DA IMPLEMENTAÇÃO'):
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-# Salvar preservando o pacote DOCX original e seus recursos incorporados.
 doc.save(OUT)
 print(OUT)
