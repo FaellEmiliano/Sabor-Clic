@@ -1,51 +1,63 @@
-# Sabor e Clic — Versão MPA (Multi-Page Application)
+# Sabor e Clic — Front-end MPA
 
-Este é o mesmo protótipo, reestruturado de SPA para **MPA de verdade**: cada
-seção do menu agora é um arquivo `.html` próprio, com URL própria, em vez de
-um único `index.html` que trocava o conteúdo via JavaScript.
+Protótipo Multi-Page Application do Sabor e Clic. Cada seção possui um arquivo HTML próprio e os dados desta etapa são simulados no navegador.
+
+## Objetivo do 3º bimestre
+
+Nesta entrega o JavaScript demonstra os conteúdos pedidos na disciplina sem antecipar a integração completa do 4º bimestre:
+
+- arrays e objetos literais;
+- `for...of`, `for...in` e `forEach`;
+- manipulação dinâmica do DOM;
+- criação e atualização do cardápio e carrinho;
+- validação de formulários;
+- cálculo em memória de subtotais e total do pedido.
+
+A Fetch API, `async/await`, integração real com Flask e refatoração completa para POO ficam para a próxima etapa.
+
+## Organização dos scripts
+
+```text
+assets/
+  data.js         -> dados simulados, estado e objetos literais
+  site.js         -> sessão simulada, menu e navegação MPA
+  components.js   -> componentes visuais compartilhados
+  cart.js         -> regras e cálculos do carrinho
+  catalog.js      -> cardápio dinâmico e manipulação do DOM
+  validation.js   -> validações simples de formulários
+  login.js        -> lógica e validação da tela de login
+  views.js        -> registro das telas do protótipo
+  a11y.js         -> recursos de acessibilidade
+```
+
+O antigo protótipo concentrava grande parte do comportamento em um único script. A versão atual separa as responsabilidades para deixar o código mais legível e facilitar a futura troca dos dados simulados pela API Flask.
+
+## Exemplos implementados para a entrega
+
+### Cardápio
+
+`catalog.js` percorre o array de produtos com `forEach`, cria elementos com `document.createElement`, atualiza o DOM e permite filtrar os produtos por categoria.
+
+### Carrinho
+
+`cart.js` adiciona e remove itens, mantém o estado no `localStorage` e calcula o valor total em memória com `reduce`.
+
+### Reserva
+
+`validation.js` percorre os campos do formulário com `for...of`, verifica campos obrigatórios e valida o formato básico do e-mail. A confirmação continua simulada nesta etapa.
+
+### Perfis
+
+`data.js` mantém os perfis em um objeto literal. `findRoleByEmail()` utiliza `for...in` para localizar o perfil associado ao e-mail de demonstração.
 
 ## Como abrir
-Abra `index.html` (tela de login) direto no navegador — não precisa de servidor.
 
-## O que mudou em relação à versão SPA
-
-- **21 páginas reais**, uma por item de menu, nomeadas `<perfil>_<secao>.html`
-  (ex.: `cliente_cardapio.html`, `admin_relatorios.html`).
-- **Sessão via `localStorage`**: ao logar, o perfil (`cliente`/`cozinha`/`admin`)
-  é salvo em `localStorage.role`. Cada página checa isso com `guardRole()`:
-  sem sessão → volta pro login; sessão de outro perfil → redireciona pro
-  início do perfil certo.
-- **Carrinho persistente**: os itens do carrinho do cliente também ficam em
-  `localStorage.cart`, então sobrevivem à navegação entre páginas reais
-  (coisa que uma SPA resolve só na memória, mas que aqui precisa ser salva).
-- **Menu com `<a href>` de verdade**, não mais botões com `onclick` simulando
-  navegação — cada link do menu lateral aponta para o arquivo `.html` real da
-  seção, com o item ativo destacado por página.
-- **Sair (`handleLogout`)** limpa a sessão e redireciona para `index.html`.
-
-## Estrutura de arquivos
-
-```
-index.html                → tela de login (única entrada sem sessão)
-cliente_*.html (8)        → seções do perfil Cliente
-cozinha_*.html (5)        → seções do perfil Cozinha
-admin_*.html (8)          → seções do perfil Admin
-assets/
-  style.css               → mesmo design system de antes (sem alterações)
-  data.js                 → dados de exemplo (produtos, bancadas, menus, perfis)
-  site.js                 → sessão, menu, navegação entre páginas, utilitários de UI
-  views.js                → conteúdo (HTML) de cada seção — igual ao app.js original
-  login.js                → lógica da tela de login
-  img/                    → imagens (sem alterações)
-```
+Abra `index.html` diretamente no navegador. Não é necessário servidor para esta etapa.
 
 ## Contas de demonstração
-Mesmas de antes — qualquer senha funciona:
-- `rafael@exemplo.com` → Cliente
-- `marina@saboreclic.com` → Cozinheiro
-- `ana@saboreclic.com` → Administrador
 
-## Observação
-O conteúdo visual e os dados de exemplo de cada tela são os mesmos da versão
-SPA — o que mudou foi a arquitetura de navegação (páginas reais + sessão em
-`localStorage`), não o design nem o conteúdo.
+- `rafael@exemplo.com` — Cliente
+- `marina@saboreclic.com` — Cozinheiro
+- `ana@saboreclic.com` — Administrador
+
+A autenticação é simulada com `localStorage`; não representa a autenticação final do sistema.
