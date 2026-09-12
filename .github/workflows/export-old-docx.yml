@@ -1,0 +1,18 @@
+name: Exportar DOCX base antiga
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.exportold/TRIGGER'
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Documentacao-Sabor-Clic-Base-Antiga
+          path: 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_Revisada.docx'
+          if-no-files-found: error
