@@ -1,1 +1,1 @@
-(https://www.figma.com/design/5XKfiCZo91lwR5qq5dX70Q/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=SBqUxwiB4E0ViRW8-1)
+Wireframe e protótipo navegavel pelo Figma (https://www.figma.com/design/5XKfiCZo91lwR5qq5dX70Q/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=SBqUxwiB4E0ViRW8-1)
