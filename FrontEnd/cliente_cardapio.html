@@ -11,44 +11,23 @@
   <a href="#app" class="skip-link">Pular para o conteúdo</a>
   <div class="app-shell" id="appShell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-mark"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div>
-        <div><strong>Sabor e Clic</strong></div>
-      </div>
-
+      <div class="brand"><div class="brand-mark"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div><div><strong>Sabor e Clic</strong></div></div>
       <nav id="menu" aria-label="Menu principal"></nav>
-
       <div class="sidebar-foot">
-        <div class="user-mini">
-          <div class="avatar" id="avatar" aria-hidden="true"></div>
-          <div>
-            <strong id="userName"></strong>
-            <small id="userRole"></small>
-          </div>
-        </div>
+        <div class="user-mini"><div class="avatar" id="avatar" aria-hidden="true"></div><div><strong id="userName"></strong><small id="userRole"></small></div></div>
         <button class="btn secondary full" style="margin-top:12px" onclick="handleLogout()">Sair</button>
       </div>
     </aside>
-
     <section class="main-shell">
-      <header class="topbar">
-        <div>
-          <button id="sidebarToggle" class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-          <span class="crumb" id="crumb"></span>
-        </div>
-        <div class="top-actions">
-          <button class="icon-btn" aria-label="Ajuda" onclick="showToast('Ação simulada no protótipo.')">?</button>
-        </div>
-      </header>
-
+      <header class="topbar"><div><button id="sidebarToggle" class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb" id="crumb"></span></div><div class="top-actions"><button class="icon-btn" aria-label="Ajuda" onclick="showToast('Ação simulada no protótipo.')">?</button></div></header>
       <main id="app"></main>
     </section>
   </div>
-
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <script src="assets/data.js"></script>
   <script src="assets/site.js"></script>
   <script src="assets/views.js"></script>
+  <script src="assets/components.js"></script>
   <script src="assets/cart.js"></script>
   <script src="assets/catalog.js"></script>
   <script>
