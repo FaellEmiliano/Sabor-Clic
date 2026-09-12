@@ -1,0 +1,18 @@
+name: Exportar V3 PDF
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.exportpdf/TRIGGER'
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Documentacao-Sabor-Clic-V3-PDF
+          path: 'Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf'
+          if-no-files-found: error
