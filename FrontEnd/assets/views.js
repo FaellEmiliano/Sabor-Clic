@@ -1,48 +1,4 @@
-function addCart(id){
-  const p=products.find(x=>x.id===id); if(p.status!=="Disponível") return;
-  const ex=state.cart.find(x=>x.id===id);
-  if(ex) ex.qtd++; else state.cart.push({id:p.id,nome:p.nome,preco:p.preco,qtd:1});
-  saveCart();
-  showToast("Item adicionado ao carrinho.");
-}
-function delCart(id){
-  state.cart=state.cart.filter(x=>x.id!==id);
-  saveCart();
-  renderCurrentPage("cliente_carrinho");
-}
-function cartTotal(){return state.cart.reduce((s,i)=>s+i.preco*i.qtd,0)}
-
-function head(title,desc,action=""){
-  return `<div class="page-head"><div><h1>${title}</h1><p>${desc}</p></div>${action}</div>`
-}
-function stat(label,value,extra=""){
-  return `<div class="card stat"><div class="meta">${label}</div><div class="value">${value}</div><div class="delta muted">${extra}</div></div>`
-}
-function benchCard(b){
-  const badge=b.status==="Disponível"?"good":b.status==="Ocupada"?"warn":"danger";
-  const ring=b.status==="Disponível"?"ok":b.status==="Ocupada"?"busy":"off";
-  const visual=b.foto?`<img src="${b.foto}" alt="${b.nome}">`:`<span>${b.emoji}</span>`;
-  return `<div class="card bench-card">
-    <div class="visual ${ring}">${visual}</div>
-    <div class="detail-row" style="margin-top:12px"><h3 style="margin:0">${b.nome}</h3><span class="badge ${badge}">${b.status}</span></div>
-    <p class="meta">Até ${b.cap} pessoas • ${b.recursos.join(" • ")}</p>
-    <div class="detail-row"><span class="price">${money(b.preco)}</span><span class="meta">por período</span></div>
-    <div class="actions" style="margin-top:12px">
-      <button class="btn secondary" onclick="showToast('Detalhes simulados da ${b.nome}.')">Detalhes</button>
-      <button class="btn" ${b.status!=="Disponível"?"disabled":""} onclick="go('cliente_reservas')">Reservar</button>
-    </div>
-  </div>`
-}
-function productCard(p){
-  const ring=p.status==="Disponível"?"ok":"off";
-  const visual=p.foto?`<img src="${p.foto}" alt="${p.nome}">`:`<span>${p.ico}</span>`;
-  return `<div class="card">
-    <div class="visual ${ring}">${visual}</div>
-    <div class="detail-row" style="margin-top:12px"><span class="badge">${p.cat}</span><span class="badge ${p.status==="Disponível"?"good":"danger"}">${p.status}</span></div>
-    <h3>${p.nome}</h3><p class="meta">${p.desc}</p>
-    <div class="detail-row"><span class="price">${money(p.preco)}</span><button class="btn" ${p.status!=="Disponível"?"disabled":""} onclick="addCart(${p.id})">Adicionar</button></div>
-  </div>`
-}
+// As funções de componentes ficam em components.js e as regras do carrinho em cart.js.
 const views = {
 cliente_inicio:()=>`
   <section class="hero">
@@ -291,13 +247,6 @@ admin_relatorios:()=>`
   </tbody></table></section>
 `
 };
-
-function ingredient(nome,atual,minimo,status){
-  return `<div class="card"><div class="detail-row"><h3>${nome}</h3><span class="badge ${status}">${status==="good"?"OK":"Baixo"}</span></div><p class="meta">Atual: ${atual} • Mínimo: ${minimo}</p><div class="progress"><span style="width:${status==="good"?"78":"38"}%"></span></div><div class="actions" style="margin-top:12px"><button class="btn secondary">Editar</button><button class="btn ghost">Movimentação</button></div></div>`
-}
-function ticket(id,bancada,tempo,itens,acao,status){
-  return `<div class="ticket"><div class="detail-row"><h4>${id}</h4><span class="badge ${status}">${bancada}</span></div><p class="timer">${tempo}</p><ul>${itens.map(i=>`<li>${i}</li>`).join("")}</ul><button class="btn ${status==="danger"?"danger":"secondary"} full" onclick="showToast('${acao} — simulado.')">${acao}</button></div>`
-}
 
 function renderCurrentPage(pageId){
   el("app").innerHTML = views[pageId]();
