@@ -15,7 +15,7 @@ function validateLoginForm(email, password) {
     return false;
   }
 
-  if (!email.includes("@") || !email.includes(".")) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     showLoginError("Informe um e-mail válido.");
     return false;
   }
