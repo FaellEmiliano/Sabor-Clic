@@ -49,14 +49,14 @@ cliente_reservas:()=>`
   <div class="section-title"><div><h2>Nova reserva — exemplo de formulário</h2></div></div>
   <section class="split">
     <div class="card"><div class="form-grid">
-      <label>Data<input type="date" value="2026-09-18"></label>
-      <label>Horário<select><option>20:00–23:00</option></select></label>
-      <label>Bancada<select><option>Provence</option><option>Toscana</option></select></label>
-      <label>Pessoas<select><option>6</option></select></label>
-      <label>Telefone<input value="(11) 99999-0000"></label>
-      <label>E-mail<input value="cliente@exemplo.com"></label>
+      <label>Data<input id="reservaData" type="date" required></label>
+      <label>Horário<select id="reservaHorario" required><option>20:00–23:00</option></select></label>
+      <label>Bancada<select id="reservaBancada" required><option>Provence</option><option>Toscana</option></select></label>
+      <label>Pessoas<input id="reservaPessoas" type="number" min="1" max="6" step="1" value="6" required></label>
+      <label>Telefone<input id="reservaTelefone" type="tel" value="(11) 99999-0000" autocomplete="tel"></label>
+      <label>E-mail<input id="reservaEmail" type="email" value="cliente@exemplo.com" required></label>
     </div><label class="field" style="margin-top:14px">Observações<textarea>Comemoração de aniversário.</textarea></label></div>
-    <div class="card sticky"><h3>Resumo</h3><div class="detail-row"><span>Bancada</span><b>Provence</b></div><div class="detail-row"><span>Período</span><b>3 horas</b></div><div class="detail-row"><span>Total</span><span class="price">${money(120)}</span></div><button class="btn good full" onclick="showToast('Reserva simulada criada.')">Confirmar reserva</button></div>
+    <div class="card sticky"><h3>Resumo</h3><div class="detail-row"><span>Bancada</span><b>Provence</b></div><div class="detail-row"><span>Período</span><b>3 horas</b></div><div class="detail-row"><span>Total</span><span class="price">${money(120)}</span></div><button id="confirmarReserva" type="button" class="btn good full" onclick="validateReservation()">Confirmar reserva</button></div>
   </section>
 `,
 cliente_sessao:()=>`
