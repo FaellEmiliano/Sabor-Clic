@@ -129,8 +129,16 @@ python -m unittest discover -s tests -v
 
 ## Documentação
 
-- [Documentação V3 do terceiro bimestre](Documentação/Documentacao_Sabor_e_Clic_3_Bimestre_V3_Base_Revisada.pdf)
+- [Documentação V3 do terceiro bimestre](Documentação/Documentacao_Sabor_e_Clic_3_Bimestre.pdf)
 - [PDF oficial do Projeto Integrador](Documentação/Versão2_ProjetoIntegrador31082026.pdf)
 - [Dicionário de dados](Documentação/Dicionario_de_Dados_Sabor_e_Clic.pdf)
 - [DER](Documentação/DER_saborclic.png)
 - [MER](Documentação/MER_saborclic.png)
+- [Plano de Segurança, matriz RBAC e OWASP Top 10:2021](Documentação/Seguranca_3_Bimestre.md)
+- [Roteiro de evidências e casos de teste de Segurança](Documentação/Evidencias_Seguranca_3_Bimestre.md)
+
+### Entregas de Banco de Dados e Segurança
+
+O 3º bimestre inclui DER no brModelo, MER lógico em 3FN e dicionário de dados editável em `.docx`; os artefatos editáveis precisam corresponder à versão final dos diagramas. A modelagem física/SQL e triggers ficam para o 4º bimestre.
+
+O controle de acesso do protótipo em `localStorage` **não é autorização real**. A API ainda não verifica senha nem perfis; veja a matriz de RBAC e o plano OWASP para o comportamento a implementar no 4º bimestre. As validações JavaScript de reserva (data, horário, capacidade, telefone e e-mail) oferecem apenas feedback demonstrativo e **não persistem a reserva**.
