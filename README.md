@@ -127,6 +127,12 @@ Com o ambiente virtual ativo e dentro de `backend`, execute:
 python -m unittest discover -s tests -v
 ```
 
+Validações demonstrativas no frontend (executar a partir da raiz do repositório com Node.js 20+):
+
+```bash
+node --test FrontEnd/tests/validation.test.cjs
+```
+
 ## Documentação
 
 - [Documentação V3 do terceiro bimestre](Documentação/Documentacao_Sabor_e_Clic_3_Bimestre.pdf)
