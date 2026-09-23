@@ -63,8 +63,9 @@ function validateReservation() {
     return reservationError(`Informe entre 1 e ${bancada.cap} pessoa(s) para esta bancada.`, fields.people);
   }
 
-  const telefone = fields.phone.value.replace(/\D/g, "");
-  if (telefone && !/^\d{10,11}$/.test(telefone)) {
+  const telefoneInformado = fields.phone.value.trim();
+  const telefone = telefoneInformado.replace(/\D/g, "");
+  if (telefoneInformado && (!/^[0-9()\s+-]+$/.test(telefoneInformado) || !/^\d{10,11}$/.test(telefone))) {
     return reservationError("Informe um telefone com DDD (10 ou 11 dígitos).", fields.phone);
   }
 
