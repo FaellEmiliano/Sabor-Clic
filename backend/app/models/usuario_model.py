@@ -1,4 +1,4 @@
-from copy import deepcopy
+'''from copy import deepcopy
 
 
 class UsuarioModel:
@@ -36,4 +36,24 @@ class UsuarioModel:
             "perfil": perfil,
         }
         cls._usuarios.append(usuario)
-        return deepcopy(usuario)
+        return deepcopy(usuario)'''
+
+from app.extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
+
+class Usuario(db.Model): # Criando o modelo da entidade Usuario, seguindo a base do MER do projeto.
+    id_usuario = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(180), nullable=False, unique=True)
+    ativo = db.Column(db.Boolean, nullable=False, default=True)
+    senha_hash = db.Column(db.String(256), nullable=False)
+
+    def __init__(self, nome, email, senha, ativo=True):
+        self.nome = nome
+        self.email = email
+        self.senha_hash = generate_password_hash(senha)
+        self.ativo = ativo
+class Usuario_model:
+    @staticmethod
+    def insert_user(nome, email, senha, ativo=True):
+        novo_usuario = Usuario(nome, email, senha, ativo)
