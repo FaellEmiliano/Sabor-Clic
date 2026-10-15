@@ -1,4 +1,4 @@
-from app.models.bancada_model import BancadaModel
+'''from app.models.bancada_model import BancadaModel
 from app.models.pedido_model import PedidoModel
 from app.models.prato_model import PratoModel
 from app.models.reserva_model import ReservaModel
@@ -13,4 +13,4 @@ def reiniciar_dados():
     ReservaModel.reiniciar()
     SessaoModel.reiniciar()
     PratoModel.reiniciar()
-    PedidoModel.reiniciar()
+    PedidoModel.reiniciar()'''

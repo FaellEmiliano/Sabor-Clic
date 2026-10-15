@@ -1,4 +1,4 @@
-from datetime import datetime
+'''from datetime import datetime
 
 from app.models.bancada_model import BancadaModel
 from app.models.reserva_model import ReservaModel
@@ -64,3 +64,4 @@ def criar_reserva(dados):
         }
     )
     return {"mensagem": "Reserva criada em memória.", "reserva": reserva}, 201
+'''

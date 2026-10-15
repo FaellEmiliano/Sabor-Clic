@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+'''from flask import Blueprint, jsonify, request
 
 from app.controllers.sessao_controller import criar_sessao, encerrar_sessao, obter_sessao
 
@@ -21,3 +21,4 @@ def sessao_por_id(id_sessao):
 def encerrar(id_sessao):
     resposta, status = encerrar_sessao(id_sessao)
     return jsonify(resposta), status
+'''

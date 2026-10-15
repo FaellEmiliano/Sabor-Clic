@@ -1,4 +1,4 @@
-from app.models.reserva_model import ReservaModel
+'''from app.models.reserva_model import ReservaModel
 from app.models.sessao_model import SessaoModel
 
 
@@ -38,3 +38,4 @@ def encerrar_sessao(id_sessao):
     sessao = SessaoModel.encerrar(id_sessao)
     ReservaModel.atualizar_status(sessao["id_reserva"], "concluida")
     return {"mensagem": "Sessão encerrada em memória.", "sessao": sessao}, 200
+'''

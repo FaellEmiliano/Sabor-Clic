@@ -1,8 +1,8 @@
 from flask import Flask, jsonify
 
 from config import Config
-from app.routes import blueprints
 
+from app.extensions import db
 
 def criar_app(configuracao=None):
     """Cria e configura a aplicação Flask do Sabor e Clic."""
@@ -12,8 +12,7 @@ def criar_app(configuracao=None):
     if configuracao:
         app.config.update(configuracao)
 
-    for blueprint in blueprints:
-        app.register_blueprint(blueprint)
+    db.init_app(app)
 
     @app.get("/api")
     def status_api():
@@ -21,7 +20,7 @@ def criar_app(configuracao=None):
             {
                 "aplicacao": "Sabor e Clic",
                 "status": "online",
-                "persistencia": "memoria",
+                "persistencia": "banco de dados",
                 "fluxo": ["reserva", "sessao", "pedido", "kds"],
             }
         )

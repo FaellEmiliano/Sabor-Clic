@@ -1,4 +1,4 @@
-from app.models.usuario_model import UsuarioModel
+'''from app.models.usuario_model import UsuarioModel
 
 PERFIS = {"cliente", "cozinha", "admin"}
 
@@ -41,4 +41,4 @@ def realizar_login(dados):
         "mensagem": "Login demonstrativo realizado.",
         "usuario": usuario,
         "autenticacao": "simulada, sem cookie ou sessão de login",
-    }, 200
+    }, 200'''

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+'''from flask import Blueprint, jsonify, request
 
 from app.controllers.auth_controller import cadastrar_cliente, obter_usuario, realizar_login
 
@@ -20,4 +20,4 @@ def cadastro_por_id(id_usuario):
 @auth_bp.post("/login")
 def login():
     resposta, status = realizar_login(request.get_json(silent=True) or {})
-    return jsonify(resposta), status
+    return jsonify(resposta), status'''

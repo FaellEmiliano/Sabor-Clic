@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+'''from flask import Blueprint, jsonify, request
 
 from app.controllers.reserva_controller import criar_reserva, listar_bancadas, obter_reserva
 
@@ -21,3 +21,4 @@ def reservas():
 def reserva_por_id(id_reserva):
     resposta, status = obter_reserva(id_reserva)
     return jsonify(resposta), status
+'''
