@@ -1,4 +1,4 @@
-from copy import deepcopy
+'''from copy import deepcopy
 from datetime import datetime
 
 
@@ -44,4 +44,4 @@ class PedidoModel:
             "criado_em": datetime.now().isoformat(timespec="seconds"),
         }
         cls._pedidos.append(pedido)
-        return deepcopy(pedido)
+        return deepcopy(pedido)'''

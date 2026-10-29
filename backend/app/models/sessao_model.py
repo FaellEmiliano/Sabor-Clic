@@ -1,4 +1,4 @@
-from copy import deepcopy
+'''from copy import deepcopy
 from datetime import datetime
 
 
@@ -52,4 +52,4 @@ class SessaoModel:
             return None
         sessao["status"] = "encerrada"
         sessao["encerrada_em"] = datetime.now().isoformat(timespec="seconds")
-        return deepcopy(sessao)
+        return deepcopy(sessao)'''

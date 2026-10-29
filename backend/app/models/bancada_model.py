@@ -1,4 +1,4 @@
-from copy import deepcopy
+'''from copy import deepcopy
 
 
 class BancadaModel:
@@ -23,4 +23,4 @@ class BancadaModel:
     @classmethod
     def obter(cls, id_bancada):
         bancada = next((item for item in cls._bancadas if item["id"] == id_bancada), None)
-        return deepcopy(bancada)
+        return deepcopy(bancada)'''

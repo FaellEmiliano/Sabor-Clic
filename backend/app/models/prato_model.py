@@ -1,4 +1,4 @@
-from copy import deepcopy
+'''from copy import deepcopy
 
 
 class PratoModel:
@@ -25,4 +25,4 @@ class PratoModel:
     @classmethod
     def obter(cls, id_prato):
         prato = next((item for item in cls._pratos if item["id"] == id_prato), None)
-        return deepcopy(prato)
+        return deepcopy(prato)'''
