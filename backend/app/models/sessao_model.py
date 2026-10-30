@@ -1,55 +1,46 @@
-'''from copy import deepcopy
-from datetime import datetime
+from app.extensions import db
+from app.models._crud import Crud_model
 
 
-class SessaoModel:
-    _originais = [
-        {
-            "id": 501,
-            "id_reserva": 1048,
-            "codigo_acesso": "SES-1048",
-            "status": "ativa",
-            "criada_em": "2026-09-09T18:58:00",
-            "iniciada_em": "2026-09-09T19:00:00",
-            "encerrada_em": None,
-        }
-    ]
-    _sessoes = deepcopy(_originais)
+class Sessao(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+    __tablename__ = 'sessao'
 
-    @classmethod
-    def reiniciar(cls):
-        cls._sessoes = deepcopy(cls._originais)
+    id_sessao = db.Column(db.Integer, primary_key=True)
+    id_reserva = db.Column(db.Integer, db.ForeignKey('reserva.id_reserva', ondelete='CASCADE', onupdate='CASCADE'), nullable=False, unique=True)
+    codigo_acesso = db.Column(db.String(100), nullable=False, unique=True)
+    status = db.Column(db.String(40), nullable=False)
+    criado_em = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
+    iniciado_em = db.Column(db.DateTime)
+    encerrado_em = db.Column(db.DateTime)
+
+
+class Sessao_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
+    entidade = Sessao
+    campos_atualizaveis = ['codigo_acesso','status','iniciado_em','encerrado_em']
 
     @classmethod
-    def obter(cls, id_sessao):
-        sessao = next((item for item in cls._sessoes if item["id"] == id_sessao), None)
-        return deepcopy(sessao)
+    def inserir_sessao(cls, id_reserva, codigo_acesso, status, iniciado_em=None, encerrado_em=None, *, confirmar=True): # Insere um novo registro no banco.
+        registro = Sessao(
+            id_reserva=id_reserva,
+            codigo_acesso=codigo_acesso,
+            status=status,
+            iniciado_em=iniciado_em,
+            encerrado_em=encerrado_em,
+        )
+        return cls._inserir(registro, confirmar)
 
     @classmethod
-    def obter_por_reserva(cls, id_reserva):
-        sessao = next((item for item in cls._sessoes if item["id_reserva"] == id_reserva), None)
-        return deepcopy(sessao)
+    def obter_sessao(cls, id_sessao): # Retorna o registro pela chave primária, ou None se não existir.
+        return cls._obter(id_sessao)
 
     @classmethod
-    def criar(cls, id_reserva):
-        agora = datetime.now().isoformat(timespec="seconds")
-        sessao = {
-            "id": max((item["id"] for item in cls._sessoes), default=500) + 1,
-            "id_reserva": id_reserva,
-            "codigo_acesso": f"SES-{id_reserva}",
-            "status": "ativa",
-            "criada_em": agora,
-            "iniciada_em": agora,
-            "encerrada_em": None,
-        }
-        cls._sessoes.append(sessao)
-        return deepcopy(sessao)
+    def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
+        return cls._listar(filtros)
 
     @classmethod
-    def encerrar(cls, id_sessao):
-        sessao = next((item for item in cls._sessoes if item["id"] == id_sessao), None)
-        if not sessao:
-            return None
-        sessao["status"] = "encerrada"
-        sessao["encerrada_em"] = datetime.now().isoformat(timespec="seconds")
-        return deepcopy(sessao)'''
+    def atualizar_sessao(cls, id_sessao, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
+        return cls._atualizar(id_sessao, campos, confirmar)
+
+    @classmethod
+    def deletar_sessao(cls, id_sessao, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
+        return cls._deletar(id_sessao, confirmar)

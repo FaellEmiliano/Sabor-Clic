@@ -1,28 +1,43 @@
-'''from copy import deepcopy
+from app.extensions import db
+from app.models._crud import Crud_model
 
 
-class PratoModel:
-    _originais = [
-        {"id": 1, "nome": "Bruschetta da Casa", "categoria": "Entradas", "preco": 18.9, "disponivel": True},
-        {"id": 2, "nome": "Risoto de Cogumelos", "categoria": "Pratos", "preco": 42.0, "disponivel": True},
-        {"id": 3, "nome": "Burger Artesanal", "categoria": "Pratos", "preco": 34.9, "disponivel": True},
-        {"id": 4, "nome": "Torta de Limão", "categoria": "Sobremesas", "preco": 16.0, "disponivel": True},
-        {"id": 5, "nome": "Suco de Laranja", "categoria": "Bebidas", "preco": 9.5, "disponivel": True},
-        {"id": 6, "nome": "Soda Italiana", "categoria": "Bebidas", "preco": 13.0, "disponivel": True},
-        {"id": 7, "nome": "Nhoque ao Sugo", "categoria": "Pratos", "preco": 37.0, "disponivel": False},
-        {"id": 8, "nome": "Petit Gâteau", "categoria": "Sobremesas", "preco": 19.5, "disponivel": True},
-    ]
-    _pratos = deepcopy(_originais)
+class Prato(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+    __tablename__ = 'prato'
 
-    @classmethod
-    def reiniciar(cls):
-        cls._pratos = deepcopy(cls._originais)
+    id_prato = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False)
+    descricao = db.Column(db.String(255))
+    preco = db.Column(db.Numeric(10, 2), nullable=False)
+    ativo = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
+
+
+class Prato_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
+    entidade = Prato
+    campos_atualizaveis = ['nome','descricao','preco','ativo']
 
     @classmethod
-    def listar(cls):
-        return deepcopy(cls._pratos)
+    def inserir_prato(cls, nome, preco, descricao=None, ativo=True, *, confirmar=True): # Insere um novo registro no banco.
+        registro = Prato(
+            nome=nome,
+            preco=preco,
+            descricao=descricao,
+            ativo=ativo,
+        )
+        return cls._inserir(registro, confirmar)
 
     @classmethod
-    def obter(cls, id_prato):
-        prato = next((item for item in cls._pratos if item["id"] == id_prato), None)
-        return deepcopy(prato)'''
+    def obter_prato(cls, id_prato): # Retorna o registro pela chave primária, ou None se não existir.
+        return cls._obter(id_prato)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_prato(cls, id_prato, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
+        return cls._atualizar(id_prato, campos, confirmar)
+
+    @classmethod
+    def deletar_prato(cls, id_prato, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
+        return cls._deletar(id_prato, confirmar)

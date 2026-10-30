@@ -1,152 +1,202 @@
-from app.extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
-class Usuario(db.Model): # Criando o modelo da entidade Usuario, seguindo a base do MER do projeto.
+from app.extensions import db
+from app.models._crud import Crud_model, salvar_alteracoes
+
+
+class Usuario(db.Model): # Mapeia os dados comuns exatamente como estão na tabela usuario.
     __tablename__ = 'usuario'
+
     id_usuario = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(180), nullable=False, unique=True)
-    ativo = db.Column(db.Boolean, nullable=False, default=True)
-    senha_hash = db.Column(db.String(256), nullable=False)
+    ativo = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
+    senha_hash = db.Column(db.String(255), nullable=False)
 
-    # Essa coluna dita de qual especialidade é esse usuário.
-    tipo = db.Column(db.String(256))
+    # O esquema usa tabelas especializadas, sem uma coluna tipo na tabela usuario.
+    cliente = db.relationship('Cliente', back_populates='usuario', uselist=False, passive_deletes='all')
+    cozinheiro = db.relationship('Cozinheiro', back_populates='usuario', uselist=False, passive_deletes='all')
+    administrador = db.relationship('Administrador', back_populates='usuario', uselist=False, passive_deletes='all')
 
-    __mapper_args__ = { # Diz ao SQLAlchemy qual especialidade ele deve ter em mente quando criar o novo registro
-        'polymorphic_identity': 'usuario',
-        'polymorphic_on': tipo
-    }
-
-    def __init__(self, nome, email, senha, ativo=True): # isso é só pro pylance parar de chorar.
+    def __init__(self, nome, email, senha, ativo=True): # Protege a senha antes de preparar o registro.
         self.nome = nome
         self.email = email
         self.senha_hash = generate_password_hash(senha)
         self.ativo = ativo
 
-class Cozinheiro(Usuario): # Criando a tabela de Cozinheiro, que é uma especialidade de Usuario.
-    __tablename__ = 'cozinheiro'
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'cozinheiro'
-    }
-
-    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), primary_key=True)
-    turno = db.Column(db.String(50), nullable=False)
-    especialidade = db.Column(db.String(100), nullable=False)
-    def __init__(self, nome, email, senha, turno, especialidade, ativo=True):
-        super().__init__(nome, email, senha, ativo)
-        self.turno = turno
-        self.especialidade = especialidade
-
-class Cliente(Usuario): # Criando a tabela de Cliente, que é uma especialidade Usuario.
+class Cliente(db.Model): # Guarda os dados exclusivos do cliente e referencia o usuário correspondente.
     __tablename__ = 'cliente'
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'cliente'
-    }
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, autoincrement=False)
+    endereco_entrega = db.Column(db.String(255))
+    usuario = db.relationship('Usuario', back_populates='cliente')
 
-    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), primary_key=True)
-    endereco_entrega = db.Column(db.String(256))
-    def __init__(self, nome, email, senha, endereco_entrega, ativo=True):
-        super().__init__(nome, email, senha, ativo)
-        self.endereco_entrega = endereco_entrega
 
-class Administrador(Usuario): # Criando a tabela de Administrador, que é uma especialidade de Usuario.
+class Cozinheiro(db.Model): # Guarda os dados exclusivos do cozinheiro, conforme o esquema SQL.
+    __tablename__ = 'cozinheiro'
+
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, autoincrement=False)
+    turno = db.Column(db.String(50))
+    especialidade = db.Column(db.String(100))
+    usuario = db.relationship('Usuario', back_populates='cozinheiro')
+
+
+class Administrador(db.Model): # Identifica um administrador pelo vínculo com usuario.
     __tablename__ = 'administrador'
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'administrador'
-    }
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, autoincrement=False)
+    usuario = db.relationship('Usuario', back_populates='administrador')
 
-    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'), primary_key=True)
 
-class Usuario_model: # Classe pra controlar os acessos ao banco de dados
-    @staticmethod
-    def inserir_cozinheiro(nome, email, senha, turno, especialidade, ativo=True): # Insere um novo cozinheiro no banco de dados.
-        novo_cozinheiro = Cozinheiro(nome, email, senha, turno, especialidade, ativo)
-        db.session.add(novo_cozinheiro)
-        db.session.commit()
-        return novo_cozinheiro
+class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários ao banco de dados.
+    entidade = Usuario
+    campos_atualizaveis = ('nome', 'email', 'ativo')
+
+    @classmethod
+    def inserir_usuario(cls, nome, email, senha, ativo=True, *, confirmar=True): # Insere somente os dados comuns do usuário.
+        return cls._inserir(Usuario(nome, email, senha, ativo), confirmar)
 
     @staticmethod
-    def inserir_cliente(nome, email, senha, endereco_entrega, ativo=True): # Insere um novo cozinheiro no banco de dados.
-        novo_cliente = Cliente(nome, email, senha, endereco_entrega, ativo)
-        db.session.add(novo_cliente)
-        db.session.commit()
-        return novo_cliente
+    def inserir_cliente(nome, email, senha, endereco_entrega=None, ativo=True, *, confirmar=True): # Insere usuário e cliente na mesma transação.
+        cliente = Cliente(usuario=Usuario(nome, email, senha, ativo), endereco_entrega=endereco_entrega)
+        db.session.add(cliente)
+        salvar_alteracoes(confirmar)
+        return cliente
 
     @staticmethod
-    def inserir_administrador(nome, email, senha, ativo=True):
-        novo_admin = Administrador(nome, email, senha, ativo)
-        db.session.add(novo_admin)
-        db.session.commit()
-        return novo_admin
+    def inserir_cozinheiro(nome, email, senha, turno=None, especialidade=None, ativo=True, *, confirmar=True): # Insere usuário e cozinheiro juntos.
+        cozinheiro = Cozinheiro(usuario=Usuario(nome, email, senha, ativo), turno=turno, especialidade=especialidade)
+        db.session.add(cozinheiro)
+        salvar_alteracoes(confirmar)
+        return cozinheiro
 
     @staticmethod
-    def obter_usuario_id(id_usuario): # Retorna um usuario a partir do ID especificado.
-        return db.session.get(Usuario, id_usuario)
+    def inserir_administrador(nome, email, senha, ativo=True, *, confirmar=True): # Insere usuário e administrador juntos.
+        administrador = Administrador(usuario=Usuario(nome, email, senha, ativo))
+        db.session.add(administrador)
+        salvar_alteracoes(confirmar)
+        return administrador
+
+    @classmethod
+    def obter_usuario_id(cls, id_usuario): # Retorna os dados comuns pelo ID especificado.
+        return cls._obter(id_usuario)
 
     @staticmethod
-    def obter_cozinheiro_id(id_cozinheiro): # Retorna um cozinheiro a partir do ID especificado. O do usuário já faz isso automáticamente, mas ainda é bom ter separado para as regras de négocio.
-        return db.session.get(Cozinheiro, id_cozinheiro)
-
-    @staticmethod
-    def obter_cliente_id(id_cliente): # Retorna um cliente pelo ID especificado.
+    def obter_cliente_id(id_cliente): # Retorna os dados do cliente; os dados comuns ficam em cliente.usuario.
         return db.session.get(Cliente, id_cliente)
 
     @staticmethod
-    def obter_usuario_email(email): # Retorna um usuario a partir do email especificado.
-        return Usuario.query.filter_by(email=email).first()
+    def obter_cozinheiro_id(id_cozinheiro): # Retorna os dados do cozinheiro e seu vínculo com usuario.
+        return db.session.get(Cozinheiro, id_cozinheiro)
 
     @staticmethod
-    def obter_todos(): # Retorna todos os usuários do banco.
-        return Usuario.query.all()
+    def obter_administrador_id(id_administrador): # Retorna a especialização de administrador.
+        return db.session.get(Administrador, id_administrador)
 
     @staticmethod
-    def atualizar_usuario(id_usuario, **kwargs): # Atualiza os dados do Usuario. Os dados atualizados dependem dos argumentos dados.
-        usuario = Usuario_model.obter_usuario_id(id_usuario)
-        if not usuario:
+    def obter_usuario_email(email): # Busca um usuário pelo e-mail informado.
+        return db.session.scalar(db.select(Usuario).where(Usuario.email == email))
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista usuários, permitindo filtros pelas colunas comuns.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_usuario(cls, id_usuario, *, confirmar=True, **campos): # Atualiza somente nome, e-mail e atividade.
+        return cls._atualizar(id_usuario, campos, confirmar)
+
+    @staticmethod
+    def atualizar_senha(id_usuario, senha, *, confirmar=True): # Recebe a nova senha e grava somente seu hash.
+        usuario = db.session.get(Usuario, id_usuario)
+        if usuario is None:
             return None
-
-        for campo, novo_valor in kwargs.items():
-            if hasattr(usuario, campo):
-                if campo not in ['id_usuario', 'senha_hash', 'ativo', 'email']:
-                    setattr(usuario, campo, novo_valor)
-                else:
-                    match campo:
-                        case 'senha_hash':
-                            if check_password_hash(usuario.senha_hash, novo_valor):
-                                return False
-                            setattr(usuario, 'senha_hash', generate_password_hash(novo_valor))
-
-                        case 'email':
-                            if Usuario_model.obter_usuario_email(novo_valor):
-                                return False
-                            setattr(usuario, 'email', novo_valor)
-        db.session.commit()
+        usuario.senha_hash = generate_password_hash(senha)
+        salvar_alteracoes(confirmar)
         return usuario
 
     @staticmethod
-    def mudar_atividade(id_usuario): # Muda o status de um usuario.
-        usuario = Usuario_model.obter_usuario_id(id_usuario)
-        if not usuario:
+    def mudar_atividade(id_usuario, *, confirmar=True): # Alterna a atividade do usuário já cadastrado.
+        usuario = db.session.get(Usuario, id_usuario)
+        if usuario is None:
             return False
         usuario.ativo = not usuario.ativo
-        db.session.commit()
+        salvar_alteracoes(confirmar)
         return True
 
-    @staticmethod
-    def deletar_usuario(id_usuario):
-        usuario = Usuario_model.obter_usuario_id(id_usuario)
-        if not usuario:
-            return False
-        try:
-            db.session.delete(usuario)
-            db.session.commit()
-            return True
-        except Exception as e: # Se der qualquer erro no banco o rollback desfaz a operação e impede o travamento do banco.
-            db.session.rollback()
-            return False
-        
+    @classmethod
+    def deletar_usuario(cls, id_usuario, *, confirmar=True): # Exclui o usuário e deixa o banco aplicar CASCADE ou RESTRICT.
+        return cls._deletar(id_usuario, confirmar)
 
-    
+
+class Cliente_model(Crud_model): # Controla o cadastro especializado de clientes existentes.
+    entidade = Cliente
+    campos_atualizaveis = ('endereco_entrega',)
+
+    @classmethod
+    def inserir_cliente(cls, id_usuario, endereco_entrega=None, *, confirmar=True): # Vincula um usuário já cadastrado à tabela cliente.
+        return cls._inserir(Cliente(id_usuario=id_usuario, endereco_entrega=endereco_entrega), confirmar)
+
+    @classmethod
+    def obter_cliente(cls, id_usuario): # Consulta o cliente pela chave compartilhada com usuario.
+        return cls._obter(id_usuario)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista os registros especializados de clientes.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_cliente(cls, id_usuario, *, confirmar=True, **campos): # Atualiza o endereço sem modificar o usuário comum.
+        return cls._atualizar(id_usuario, campos, confirmar)
+
+    @classmethod
+    def deletar_cliente(cls, id_usuario, *, confirmar=True): # Exclui somente a especialização; reservas podem impedir a operação.
+        return cls._deletar(id_usuario, confirmar)
+
+
+class Cozinheiro_model(Crud_model): # Controla os dados profissionais dos cozinheiros.
+    entidade = Cozinheiro
+    campos_atualizaveis = ('turno', 'especialidade')
+
+    @classmethod
+    def inserir_cozinheiro(cls, id_usuario, turno=None, especialidade=None, *, confirmar=True): # Vincula um usuário já cadastrado à tabela cozinheiro.
+        return cls._inserir(Cozinheiro(id_usuario=id_usuario, turno=turno, especialidade=especialidade), confirmar)
+
+    @classmethod
+    def obter_cozinheiro(cls, id_usuario): # Consulta a especialização pelo ID do usuário.
+        return cls._obter(id_usuario)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista cozinheiros e permite filtrar os dados profissionais.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_cozinheiro(cls, id_usuario, *, confirmar=True, **campos): # Atualiza turno e especialidade.
+        return cls._atualizar(id_usuario, campos, confirmar)
+
+    @classmethod
+    def deletar_cozinheiro(cls, id_usuario, *, confirmar=True): # Exclui somente a especialização, preservando usuario.
+        return cls._deletar(id_usuario, confirmar)
+
+
+class Administrador_model(Crud_model): # Controla o vínculo de administrador de um usuário existente.
+    entidade = Administrador
+    campos_atualizaveis = ()
+
+    @classmethod
+    def inserir_administrador(cls, id_usuario, *, confirmar=True): # Vincula um usuário já cadastrado à tabela administrador.
+        return cls._inserir(Administrador(id_usuario=id_usuario), confirmar)
+
+    @classmethod
+    def obter_administrador(cls, id_usuario): # Consulta o vínculo administrativo.
+        return cls._obter(id_usuario)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista os administradores cadastrados.
+        return cls._listar(filtros)
+
+    @classmethod
+    def deletar_administrador(cls, id_usuario, *, confirmar=True): # Remove somente o vínculo administrativo.
+        return cls._deletar(id_usuario, confirmar)
+
+    # Administrador não possui campos editáveis além da PK; os dados comuns são atualizados em Usuario_model.
