@@ -19,7 +19,7 @@ class Pedido_model(Crud_model): # Controla somente os acessos dessa entidade ao 
     campos_atualizaveis = ['status','valor_total','tempo_estimado','endereco_entrega']
 
     @classmethod
-    def inserir_pedido(cls, id_sessao, status, valor_total=0, tempo_estimado=None, endereco_entrega=None, *, confirmar=True): # Insere um novo registro no banco.
+    def inserir_pedido(cls, id_sessao, status, valor_total=0.0, tempo_estimado=None, endereco_entrega=None, *, confirmar=True): # Insere um novo registro no banco.
         registro = Pedido(
             id_sessao=id_sessao,
             status=status,

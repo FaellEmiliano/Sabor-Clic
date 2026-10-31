@@ -25,7 +25,7 @@ class Reserva_model(Crud_model): # Controla somente os acessos dessa entidade ao
     campos_atualizaveis = ['id_cliente','id_bancada','inicio','fim','status','valor_total']
 
     @classmethod
-    def inserir_reserva(cls, id_cliente, id_bancada, inicio, fim, status, valor_total=0, *, confirmar=True): # Insere um novo registro no banco.
+    def inserir_reserva(cls, id_cliente, id_bancada, inicio, fim, status, valor_total=0.0, *, confirmar=True): # Insere um novo registro no banco.
         registro = Reserva(
             id_cliente=id_cliente,
             id_bancada=id_bancada,
