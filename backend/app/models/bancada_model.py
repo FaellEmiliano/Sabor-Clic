@@ -11,6 +11,8 @@ class Bancada(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou
     valor_hora = db.Column(db.Numeric(10, 2), nullable=False)
     ativa = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
 
+    __table_args__ = (db.CheckConstraint('valor_hora >= 0', name='chk_bancada_valor'),)
+
 
 class Bancada_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
     entidade = Bancada

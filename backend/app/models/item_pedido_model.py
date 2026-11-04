@@ -8,12 +8,14 @@ class ItemPedido(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar
     id_item_pedido = db.Column(db.Integer, primary_key=True)
     id_pedido = db.Column(db.Integer, db.ForeignKey('pedido.id_pedido', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     id_prato = db.Column(db.Integer, db.ForeignKey('prato.id_prato', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
+    nome_prato = db.Column(db.String(120))
     quantidade = db.Column(db.Integer, nullable=False)
     preco_unitario = db.Column(db.Numeric(10, 2), nullable=False)
     subtotal = db.Column(db.Numeric(10, 2), nullable=False)
 
     # Mantém as mesmas restrições declaradas no esquema SQL.
     __table_args__ = (
+        db.CheckConstraint('preco_unitario >= 0 AND subtotal >= 0', name='chk_item_valores'),
         db.CheckConstraint('quantidade > 0', name='chk_item_pedido_quantidade'),
     )
 

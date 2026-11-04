@@ -10,6 +10,8 @@ class Ingrediente(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem cria
     unidade_medida = db.Column(db.String(30), nullable=False)
     quantidade_estoque = db.Column(db.Numeric(12, 3), nullable=False, server_default=db.text('0.000'))
 
+    __table_args__ = (db.CheckConstraint('quantidade_estoque >= 0', name='chk_ingrediente_valor'),)
+
 
 class Ingrediente_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
     entidade = Ingrediente

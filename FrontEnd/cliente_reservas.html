@@ -19,22 +19,21 @@
       </div>
     </aside>
     <section class="main-shell">
-      <header class="topbar"><div><button id="sidebarToggle" class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb" id="crumb"></span></div><div class="top-actions"><button class="icon-btn" aria-label="Ajuda" onclick="showToast('Ação simulada no protótipo.')">?</button></div></header>
+      <header class="topbar"><div><button id="sidebarToggle" class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu" aria-expanded="false" aria-controls="sidebar">☰</button><span class="crumb" id="crumb"></span></div><div class="top-actions"><button class="icon-btn" aria-label="Ajuda" onclick="showToast('Use o menu para acessar as funções do seu perfil.')">?</button></div></header>
       <main id="app"></main>
     </section>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="assets/domain.js"></script>
   <script src="assets/data.js"></script>
+  <script src="assets/api.js"></script>
   <script src="assets/site.js"></script>
   <script src="assets/components.js"></script>
-  <script src="assets/views.js"></script>
   <script src="assets/validation.js"></script>
+  <script src="assets/cart.js"></script>
+  <script src="assets/views.js"></script>
   <script>
-    const role = guardRole("cliente");
-    if(role){
-      initShell(role, "cliente_reservas");
-      renderCurrentPage("cliente_reservas");
-    }
+    bootPage("cliente", "cliente_reservas");
   </script>
   <script src="assets/a11y.js"></script>
 </body>

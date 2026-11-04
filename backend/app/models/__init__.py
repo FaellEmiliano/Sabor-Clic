@@ -17,3 +17,5 @@ from app.models.ingrediente_model import Ingrediente, Ingrediente_model
 from app.models.ficha_tecnica_model import FichaTecnica, FichaTecnica_model
 from app.models.substituicao_model import SubstituicaoIngrediente, Substituicao_model
 from app.models._crud import salvar_alteracoes
+
+from app.models.operacao_model import SessaoAutenticacao, LimiteAcesso, EventoAuditoria, MovimentacaoEstoque

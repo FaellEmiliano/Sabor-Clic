@@ -11,6 +11,18 @@ class Pedido(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou 
     valor_total = db.Column(db.Numeric(10, 2), nullable=False, server_default=db.text('0.00'))
     tempo_estimado = db.Column(db.Integer)
     endereco_entrega = db.Column(db.String(255))
+    chave_idempotencia = db.Column(db.String(64))
+    hash_requisicao = db.Column(db.String(64))
+    observacoes = db.Column(db.String(500))
+    preparo_em = db.Column(db.DateTime)
+    pronto_em = db.Column(db.DateTime)
+    entregue_em = db.Column(db.DateTime)
+    cancelado_em = db.Column(db.DateTime)
+    __table_args__ = (
+        db.UniqueConstraint('id_sessao', 'chave_idempotencia', name='uq_pedido_idempotencia'),
+        db.CheckConstraint('valor_total >= 0', name='chk_pedido_valor'),
+        db.CheckConstraint('tempo_estimado IS NULL OR tempo_estimado >= 0', name='chk_pedido_tempo'),
+    )
     criado_em = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
 

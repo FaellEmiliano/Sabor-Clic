@@ -39,8 +39,8 @@ class ModelTestCase(TestCase):
         self.contexto.pop()
 
     def test_mapeamento_corresponde_ao_schema_mysql(self):
-        esquema = (Path(__file__).parents[1] / "database" / "SCHEMA.sql").read_text(encoding="utf-8")
-        tabelas = re.findall(r"CREATE TABLE `([^`]+)` \((.*?)\) ENGINE=", esquema, re.S)
+        esquema = (Path(__file__).parents[1] / "database" / "01_modelo_fisico.sql").read_text(encoding="utf-8")
+        tabelas = re.findall(r"CREATE TABLE IF NOT EXISTS `([^`]+)` \((.*?)\) ENGINE=", esquema, re.S)
         self.assertEqual(set(db.metadata.tables), {nome for nome, _ in tabelas})
         for nome, corpo in tabelas:
             with self.subTest(tabela=nome):
@@ -55,7 +55,7 @@ class ModelTestCase(TestCase):
                     self.assertEqual(tabela.columns[coluna].nullable, "NOT NULL" not in definicao)
                 pk = re.search(r"PRIMARY KEY \(([^)]+)\)", corpo).group(1)
                 self.assertEqual(list(tabela.primary_key.columns.keys()), re.findall(r"`([^`]+)`", pk))
-                fks = re.findall(r"FOREIGN KEY \(`([^`]+)`\) REFERENCES `([^`]+)` \(`([^`]+)`\) ON DELETE (\w+) ON UPDATE (\w+)", corpo)
+                fks = re.findall(r"FOREIGN KEY \(`([^`]+)`\) REFERENCES `([^`]+)` \(`([^`]+)`\) ON DELETE (CASCADE|RESTRICT|SET NULL) ON UPDATE (CASCADE|RESTRICT|SET NULL)", corpo)
                 esperado = {(coluna, f"{destino}.{chave}", excluir, atualizar) for coluna, destino, chave, excluir, atualizar in fks}
                 real = {(fk.parent.name, fk.target_fullname, fk.ondelete, fk.onupdate) for fk in tabela.foreign_keys}
                 self.assertEqual(real, esperado)

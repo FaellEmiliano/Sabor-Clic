@@ -219,3 +219,9 @@ __marimo__/
 
 # Database
 .db
+
+# Local authentication secret and generated QA artifacts
+.session-key
+output/
+tmp/
+graphify-out/

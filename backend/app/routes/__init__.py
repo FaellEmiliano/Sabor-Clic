@@ -1,6 +1,4 @@
-'''from app.routes.auth_routes import auth_bp
-from app.routes.pedido_routes import pedido_bp
-from app.routes.reserva_routes import reserva_bp
-from app.routes.sessao_routes import sessao_bp
+"""The active API is registered in api_routes; legacy route modules are not mounted."""
+from app.routes.api_routes import api_bp
 
-blueprints = (auth_bp, reserva_bp, sessao_bp, pedido_bp)'''
+__all__ = ['api_bp']

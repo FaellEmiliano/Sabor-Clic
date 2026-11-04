@@ -11,6 +11,8 @@ class Prato(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou a
     preco = db.Column(db.Numeric(10, 2), nullable=False)
     ativo = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
 
+    __table_args__ = (db.CheckConstraint('preco >= 0', name='chk_prato_valor'),)
+
 
 class Prato_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
     entidade = Prato

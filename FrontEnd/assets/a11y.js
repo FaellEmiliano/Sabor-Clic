@@ -1,6 +1,7 @@
 (() => {
   const KEY = 'sabor-clic-a11y';
-  const state = JSON.parse(localStorage.getItem(KEY) || '{}');
+  let state={};
+  try{const value=JSON.parse(localStorage.getItem(KEY)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))state=value;}catch{state={};}
 
   const icon = (path) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;

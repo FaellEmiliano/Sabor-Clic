@@ -16,6 +16,7 @@ class Reserva(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou
 
     # Mantém as mesmas restrições declaradas no esquema SQL.
     __table_args__ = (
+        db.CheckConstraint('valor_total >= 0', name='chk_reserva_valor'),
         db.CheckConstraint('fim > inicio', name='chk_reserva_periodo'),
     )
 

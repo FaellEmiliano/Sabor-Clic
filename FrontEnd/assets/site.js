@@ -1,6 +1,5 @@
 // Camada de "app shell": sessão, menu, navegação entre páginas reais e utilitários de UI.
-// Cada página HTML é um arquivo próprio (MPA); o estado de sessão e o carrinho
-// são persistidos em localStorage para sobreviver ao recarregamento de página.
+// Cada página valida o cookie de sessão no servidor; o carrinho é local por usuário.
 
 const ROLE_HOME = { cliente: "cliente_inicio", cozinha: "cozinha_dashboard", admin: "admin_dashboard" };
 
@@ -27,18 +26,12 @@ function homePageFor(role){ return ROLE_HOME[role]; }
 // Navegação real entre páginas (substitui o antigo go() de SPA por um redirect de verdade).
 function go(pageId){ window.location.href = pageId + ".html"; }
 
-function handleLogout(){
-  localStorage.removeItem("role");
-  window.location.href = "index.html";
-}
-
-// Garante que só o dono da sessão certa acessa cada página.
-// Sem login -> volta pro index. Login de outro perfil -> manda pro início do perfil correto.
-function guardRole(expectedRole){
-  const role = currentRole();
-  if(!role){ window.location.href = "index.html"; return null; }
-  if(role !== expectedRole){ window.location.href = homePageFor(role) + ".html"; return null; }
-  return role;
+async function handleLogout(){
+  try {
+    await api('/logout', {method:'POST',body:{}});
+    localStorage.removeItem('role');
+    window.location.href = 'index.html';
+  } catch(error) { showToast(error.message); }
 }
 
 function renderMenu(role, activePage){

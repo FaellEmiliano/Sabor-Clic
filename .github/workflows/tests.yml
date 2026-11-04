@@ -1,0 +1,51 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-disposable-only
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pci-disposable-only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements.txt
+      - name: Python regression suite
+        working-directory: backend
+        run: python -m unittest discover -s tests
+      - name: MySQL SQL, stock and concurrency
+        working-directory: backend
+        env:
+          QA_DATABASE_URL: mysql+pymysql://root:ci-disposable-only@127.0.0.1:3306/mysql
+        run: python -m tests.mysql_verification
+      - name: JavaScript domain and validation
+        run: node --test FrontEnd/tests/domain.test.cjs FrontEnd/tests/validation.test.cjs
+      - name: Start disposable HTTP fixture
+        working-directory: backend
+        run: python -m tests.serve_fixture > "$RUNNER_TEMP/sabor-qa.log" 2>&1 &
+      - name: Wait for fixture
+        run: |
+          python - <<'PY'
+          import time, urllib.request
+          for attempt in range(30):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:5051/api',timeout=1)
+                  break
+              except OSError:
+                  time.sleep(1)
+          else:
+              raise SystemExit('HTTP fixture did not start')
+          PY
+      - name: Frontend with real HTTP API
+        run: node --test FrontEnd/tests/integration.test.cjs

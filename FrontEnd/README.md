@@ -1,63 +1,13 @@
-# Sabor e Clic — Front-end MPA
+# Frontend Sabor e Clic
 
-Protótipo Multi-Page Application do Sabor e Clic. Cada seção possui um arquivo HTML próprio e os dados desta etapa são simulados no navegador.
+MPA conectada à API Flask. Abra http://127.0.0.1:5000/ após instalar a migração SQL descrita no README da raiz.
 
-## Objetivo do 3º bimestre
+`domain.js` implementa as entidades ES6 com campos privados, herança e métodos estáticos. `Carrinho` controla quantidades e centavos; `Pedido` serializa IDs/quantidades e identifica uma operação de checkout. O valor cobrado é sempre calculado novamente pelo backend.
 
-Nesta entrega o JavaScript demonstra os conteúdos pedidos na disciplina sem antecipar a integração completa do 4º bimestre:
+`api.js` centraliza Fetch com cookie e CSRF. `views.js` carrega somente recursos necessários à tela, oferece paginação/filtros, usa totais agregados da sessão e carrega opções de relacionamento separadas das tabelas paginadas. `cart.js` manipula o carrinho por meio de seus métodos. `login.js` implementa login/cadastro reais. `a11y.js` trata preferências locais inválidas sem quebrar a página.
 
-- arrays e objetos literais;
-- `for...of`, `for...in` e `forEach`;
-- manipulação dinâmica do DOM;
-- criação e atualização do cardápio e carrinho;
-- validação de formulários;
-- cálculo em memória de subtotais e total do pedido.
+As telas incluem observações e endereço por pedido, controle explícito de quantidade, estimativa e estados do KDS, histórico, disponibilidade por intervalo, auditoria e movimentações de estoque. A cozinha é atualizada por polling de dez segundos; não há promessa de entrega instantânea por WebSocket.
 
-A Fetch API, `async/await`, integração real com Flask e refatoração completa para POO ficam para a próxima etapa.
+A API exige autenticação nas consultas de catálogo. Papéis no armazenamento local são somente informação de interface; o servidor faz a autorização. Checkout usa chave de idempotência, preservada após falha de rede.
 
-## Organização dos scripts
-
-```text
-assets/
-  data.js         -> dados simulados, estado e objetos literais
-  site.js         -> sessão simulada, menu e navegação MPA
-  components.js   -> componentes visuais compartilhados
-  cart.js         -> regras e cálculos do carrinho
-  catalog.js      -> cardápio dinâmico e manipulação do DOM
-  validation.js   -> validações simples de formulários
-  login.js        -> lógica e validação da tela de login
-  views.js        -> registro das telas do protótipo
-  a11y.js         -> recursos de acessibilidade
-```
-
-O antigo protótipo concentrava grande parte do comportamento em um único script. A versão atual separa as responsabilidades para deixar o código mais legível e facilitar a futura troca dos dados simulados pela API Flask.
-
-## Exemplos implementados para a entrega
-
-### Cardápio
-
-`catalog.js` percorre o array de produtos com `forEach`, cria elementos com `document.createElement`, atualiza o DOM e permite filtrar os produtos por categoria.
-
-### Carrinho
-
-`cart.js` adiciona e remove itens, mantém o estado no `localStorage` e calcula o valor total em memória com `reduce`.
-
-### Reserva
-
-`validation.js` percorre os campos do formulário com `for...of`, verifica campos obrigatórios e valida o formato básico do e-mail. A confirmação continua simulada nesta etapa.
-
-### Perfis
-
-`data.js` mantém os perfis em um objeto literal. `findRoleByEmail()` utiliza `for...in` para localizar o perfil associado ao e-mail de demonstração.
-
-## Como abrir
-
-Abra `index.html` diretamente no navegador. Não é necessário servidor para esta etapa.
-
-## Contas de demonstração
-
-- `rafael@exemplo.com` — Cliente
-- `marina@saboreclic.com` — Cozinheiro
-- `ana@saboreclic.com` — Administrador
-
-A autenticação é simulada com `localStorage`; não representa a autenticação final do sistema.
+Testes e limites estão no README da raiz. Não há campos de capacidade/pessoas, categoria ou imagem no modelo final desta versão; os diagramas antigos são históricos. O sistema não usa triggers.

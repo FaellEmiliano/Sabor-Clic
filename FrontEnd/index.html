@@ -25,18 +25,15 @@
         <label class="field">Senha<input id="loginPassword" type="password" placeholder="••••••••" required></label>
         <div class="login-error" id="loginError" role="alert"></div>
         <button class="btn full" type="submit">Entrar</button>
-        <div class="login-demo">
-          <span class="meta" id="demoLabel">Contas de demonstração (protótipo, qualquer senha funciona):</span>
-          <button type="button" class="demo-chip" onclick="fillLogin('rafael@exemplo.com')" aria-describedby="demoLabel">rafael@exemplo.com <small>Cliente</small></button>
-          <button type="button" class="demo-chip" onclick="fillLogin('marina@saboreclic.com')" aria-describedby="demoLabel">marina@saboreclic.com <small>Cozinheiro</small></button>
-          <button type="button" class="demo-chip" onclick="fillLogin('ana@saboreclic.com')" aria-describedby="demoLabel">ana@saboreclic.com <small>Administrador</small></button>
-        </div>
+        <p class="meta">Ainda não tem conta? <button type="button" class="btn secondary" onclick="openSignup()">Cadastrar cliente</button></p>
       </form>
     </div>
   </section>
 
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="assets/domain.js"></script>
   <script src="assets/data.js"></script>
+  <script src="assets/api.js"></script>
   <script src="assets/site.js"></script>
   <script src="assets/login.js"></script>
   <script src="assets/a11y.js"></script>
