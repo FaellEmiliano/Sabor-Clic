@@ -99,27 +99,36 @@ def criar_app(configuracao=None):
             abort(404)
         return send_from_directory(frontend,path)
 
+    senha_padrao_demo = 'SaborDemo123!'
+
     @app.cli.command('init-db')
-    def init_db():
+    @click.option('--demo', is_flag=True, help='Cria as três contas de demonstração com a senha padrão.')
+    def init_db(demo):
         """Create missing tables, without dropping existing data."""
         from app.database import migrate
         migrate()
         click.echo('SQL aplicado sem triggers e sem apagar registros.')
+        if demo:
+            criar_contas_demo(senha_padrao_demo)
 
-    @app.cli.command('migrate-db')
-    def migrate_db():
-        from app.database import migrate
-        migrate()
-        click.echo('Migração SQL aditiva concluída.')
+    def validar_senha_demo(senha):
+        if len(senha) < 8:
+            raise click.ClickException('A senha deve ter pelo menos oito caracteres.')
 
-    @app.cli.command('seed-demo')
-    @click.option('--senha',prompt=True,hide_input=True,confirmation_prompt=True)
-    def seed_demo(senha):
+    def criar_contas_demo(senha):
         from app.database import seed
         from werkzeug.security import generate_password_hash
-        if len(senha)<8:raise click.ClickException('A senha deve ter pelo menos oito caracteres.')
         seed(generate_password_hash(senha))
         click.echo('Demonstração criada: admin@demo.local, cliente@demo.local, chef@demo.local.')
+
+    @app.cli.command('seed-demo')
+    @click.option('--senha', default=senha_padrao_demo)
+    @click.option('--pedir-senha', is_flag=True, help='Solicita uma senha temporária sem exibi-la.')
+    def seed_demo(senha, pedir_senha):
+        if pedir_senha:
+            senha = click.prompt('Senha temporária das contas demo', hide_input=True, confirmation_prompt=True)
+        validar_senha_demo(senha)
+        criar_contas_demo(senha)
 
     @app.cli.command('backup-db')
     @click.argument('path',type=click.Path())

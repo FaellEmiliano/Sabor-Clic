@@ -16,6 +16,6 @@
 
 ## Preparação
 
-Aplicar primeiro a migração SQL com conta administrativa. Preparar dados com `seed-demo`, escolher senha de demonstração e ensaiar os três perfis. Criar reserva com início próximo ao horário da apresentação, sem alterar relógio do sistema ou desativar validações. Não exibir `.env`, `.session-key`, cookies, tokens ou snapshot privado.
+Preparar o esquema com `init-db` usando uma conta administrativa. Criar dados com `seed-demo` e ensaiar os três perfis. Criar reserva com início próximo ao horário da apresentação, sem alterar relógio do sistema ou desativar validações. Não exibir `.env`, `.session-key`, cookies, tokens ou snapshot privado.
 
 Para demonstração reproduzível sem tocar no banco real, iniciar a fixture. Ela já tem uma sessão ativa e dados de teste; informar claramente que é um ambiente descartável, e não simular que foram criados no MySQL real.

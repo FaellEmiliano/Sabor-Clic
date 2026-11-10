@@ -2,7 +2,27 @@
 
 Aplicação HTML/CSS/JavaScript com API Flask e persistência MySQL. Fluxo: **reserva → sessão → pedido → cozinha**. Estoque, substituições e estornos são processados em transações no backend. **Não há triggers, conforme a orientação do projeto nesta implementação.**
 
-## Execução local no Windows
+## Execução local
+
+No Windows 10, instale Python 3.10+ e MySQL 8, inicie o MySQL e crie um esquema vazio. Na raiz do projeto, execute:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\instalar.ps1 -Demo
+```
+
+O instalador cria o ambiente virtual, instala as dependências e abre o `.env` no Bloco de Notas na primeira execução. Salve os dados de conexão de uma conta MySQL com permissão para criar tabelas no esquema e confirme no terminal. Use `-Demo` para incluir as contas de demonstração.
+
+### Linux
+
+Com Python 3.10+, suporte a `venv` e MySQL 8 em execução, crie um esquema vazio e, na raiz do projeto, rode:
+
+```bash
+bash instalar.sh --demo
+```
+
+Na primeira execução, edite e salve o `.env` em outro terminal antes de confirmar. Use uma conta MySQL com permissão para criar tabelas. A opção `--demo` é opcional. Para iniciar o Flask, rode `../.venv/bin/python run.py` dentro de `backend`.
+
+### Instalação manual no Windows
 
 Use Python 3.10+ e MySQL 8. O Node.js 22+ é necessário apenas para os testes JavaScript. Na raiz do repositório, execute no PowerShell:
 
@@ -13,17 +33,6 @@ if (!(Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
 Edite o `.env` na raiz. Preencha `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_HOST` e `DB_PORT`, ou configure `DATABASE_URL`. Variáveis do processo têm precedência. Substitua o valor de exemplo de `SECRET_KEY` por uma chave aleatória persistente. Se remover a variável, o ambiente local gera a chave em `.session-key`. Use `COOKIE_SECURE=false` para o HTTP local e `true` em HTTPS.
-
-### Banco existente
-
-Faça um backup do esquema e dos dados antes de atualizar. Se o banco se chama `saboreclic`, abra `backend/database/APLICAR_MIGRACAO.sql` no MySQL Workbench, conecte com uma conta administrativa e execute o arquivo inteiro. Confira o nome do esquema no `USE` antes de rodar. Para outro esquema, use o comando abaixo com uma conexão administrativa apontando para o banco correto:
-
-```powershell
-Set-Location backend
-..\.venv\Scripts\python.exe -m flask --app run migrate-db
-```
-
-A migração acrescenta as tabelas e colunas necessárias sem apagar registros ou criar triggers. Use a conta normal da aplicação para iniciar o servidor. O administrador já cadastrado pode continuar usando sua conta.
 
 ### Banco novo
 
@@ -40,7 +49,19 @@ Volte a usar as credenciais normais da aplicação. Ainda em `backend`, crie o p
 ..\.venv\Scripts\python.exe -m flask --app run create-admin
 ```
 
-Para preencher um ambiente de demonstração, execute `..\.venv\Scripts\python.exe -m flask --app run seed-demo`. O comando solicita uma senha e cria as contas `admin@demo.local`, `cliente@demo.local` e `chef@demo.local`.
+### Instalação com contas temporárias
+
+Em um banco novo, execute `..\.venv\Scripts\python.exe -m flask --app run init-db --demo` dentro de `backend` para inicializar o esquema e criar as três contas. Se o esquema já estiver atualizado, execute `..\.venv\Scripts\python.exe -m flask --app run seed-demo`. Os dois comandos usam a senha de demonstração `SaborDemo123!` para as três contas novas, sem pedir entrada. Contas existentes mantêm a senha e o estado atuais.
+
+| Perfil | E-mail |
+| --- | --- |
+| Administrador | `admin@demo.local` |
+| Cliente | `cliente@demo.local` |
+| Cozinheiro | `chef@demo.local` |
+
+Para usar as contas como acesso inicial de uma instalação real, mantenha o sistema em acesso local durante a configuração e use `seed-demo --pedir-senha` em um esquema inicializado para escolher uma senha temporária própria. Entre com o administrador demo, abra **Usuários** e cadastre seu administrador definitivo com uma senha própria. Saia e entre com a nova conta para confirmar o acesso. Em **Usuários**, exclua as três contas demo. Se houver registros vinculados que impeçam a exclusão, desative a conta. Conclua essa etapa antes de disponibilizar o sistema. O servidor não recria as contas ao reiniciar.
+
+O comando também inclui dados fictícios de catálogo. Para começar com um banco sem esses dados, use `init-db` e `create-admin` conforme os passos anteriores.
 
 ### Iniciar e acessar
 
@@ -105,10 +126,8 @@ Sessões autenticadas são persistidas e revogadas no servidor. O cookie é Http
 
 - `01_modelo_fisico.sql`: esquema final e restrições, não destrutivo.
 - `02_insercoes_basicas.sql`: dados mínimos sem senha real fixa.
-- `03_migracao_integracao.sql`: alterações aditivas da versão anterior, aplicadas com inspeção pelo comando de migração.
+- `03_migracao_integracao.sql`: alterações aditivas da versão anterior, aplicadas com inspeção pelo comando `init-db`.
 - `11_queries_relatorios.sql`: vendas, estoque, ocupação e auditoria.
-- `APLICAR_MIGRACAO.sql`: instalação administrativa idempotente para o banco local.
-
 Não há `20_triggers.sql`. O saldo é atualizado pelo backend, dentro da mesma transação das movimentações.
 
 ```powershell

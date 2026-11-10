@@ -29,7 +29,7 @@ Capturas: `output/evidencias/admin-bancada.png`, `cliente-pedido.png` e `cozinha
 
 ## Implantação local pendente
 
-O banco real possui a conta administrativa criada anteriormente, mas o usuário MySQL de runtime não tem CREATE/ALTER. Por isso a nova versão ainda depende da execução administrativa de `backend/database/APLICAR_MIGRACAO.sql`. O script está preparado e um snapshot dos dados anteriores foi salvo em `output/backups/pre-migracao-20261102.json`, fora do Git.
+O banco real possui a conta administrativa criada anteriormente, mas o usuário MySQL de runtime não tem CREATE/ALTER. Para atualizar um banco existente preservando os dados, execute `flask --app run init-db` com uma conexão administrativa. Um snapshot dos dados anteriores foi salvo em `output/backups/pre-migracao-20261102.json`, fora do Git.
 
 Não foram instaladas triggers nem alteradas as tabelas reais. Após aplicar o SQL com conta administrativa, reiniciar o Flask e executar o smoke test real. Manter a conta de runtime com somente DML.
 
