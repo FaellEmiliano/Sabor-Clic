@@ -1,26 +1,45 @@
-from copy import deepcopy
+from app.extensions import db
+from app.models._crud import Crud_model
 
 
-class BancadaModel:
-    _originais = [
-        {"id": 1, "nome": "Bancada Toscana", "capacidade": 4, "preco": 85.0, "status": "disponivel"},
-        {"id": 2, "nome": "Bancada Provence", "capacidade": 6, "preco": 120.0, "status": "disponivel"},
-        {"id": 3, "nome": "Bancada Aurora", "capacidade": 2, "preco": 65.0, "status": "ocupada"},
-        {"id": 4, "nome": "Bancada Ipê", "capacidade": 5, "preco": 105.0, "status": "disponivel"},
-        {"id": 5, "nome": "Bancada Cedro", "capacidade": 4, "preco": 95.0, "status": "manutencao"},
-        {"id": 6, "nome": "Bancada Manacá", "capacidade": 3, "preco": 78.0, "status": "disponivel"},
-    ]
-    _bancadas = deepcopy(_originais)
+class Bancada(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+    __tablename__ = 'bancada'
 
-    @classmethod
-    def reiniciar(cls):
-        cls._bancadas = deepcopy(cls._originais)
+    id_bancada = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.String(255))
+    valor_hora = db.Column(db.Numeric(10, 2), nullable=False)
+    ativa = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
 
-    @classmethod
-    def listar(cls):
-        return deepcopy(cls._bancadas)
+    __table_args__ = (db.CheckConstraint('valor_hora >= 0', name='chk_bancada_valor'),)
+
+
+class Bancada_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
+    entidade = Bancada
+    campos_atualizaveis = ['nome','descricao','valor_hora','ativa']
 
     @classmethod
-    def obter(cls, id_bancada):
-        bancada = next((item for item in cls._bancadas if item["id"] == id_bancada), None)
-        return deepcopy(bancada)
+    def inserir_bancada(cls, nome, valor_hora, descricao=None, ativa=True, *, confirmar=True): # Insere um novo registro no banco.
+        registro = Bancada(
+            nome=nome,
+            valor_hora=valor_hora,
+            descricao=descricao,
+            ativa=ativa,
+        )
+        return cls._inserir(registro, confirmar)
+
+    @classmethod
+    def obter_bancada(cls, id_bancada): # Retorna o registro pela chave primária, ou None se não existir.
+        return cls._obter(id_bancada)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_bancada(cls, id_bancada, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
+        return cls._atualizar(id_bancada, campos, confirmar)
+
+    @classmethod
+    def deletar_bancada(cls, id_bancada, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
+        return cls._deletar(id_bancada, confirmar)

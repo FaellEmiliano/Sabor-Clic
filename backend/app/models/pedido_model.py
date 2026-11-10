@@ -1,47 +1,58 @@
-from copy import deepcopy
-from datetime import datetime
+from app.extensions import db
+from app.models._crud import Crud_model
 
 
-class PedidoModel:
-    _originais = [
-        {
-            "id": 209,
-            "id_sessao": 501,
-            "itens": [
-                {"id_prato": 2, "nome": "Risoto de Cogumelos", "quantidade": 1, "preco_unitario": 42.0, "subtotal": 42.0},
-                {"id_prato": 5, "nome": "Suco de Laranja", "quantidade": 2, "preco_unitario": 9.5, "subtotal": 19.0},
-            ],
-            "valor_total": 61.0,
-            "observacao": "",
-            "status": "em_preparo",
-            "criado_em": "2026-09-09T20:14:00",
-        }
-    ]
-    _pedidos = deepcopy(_originais)
+class Pedido(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+    __tablename__ = 'pedido'
 
-    @classmethod
-    def reiniciar(cls):
-        cls._pedidos = deepcopy(cls._originais)
+    id_pedido = db.Column(db.Integer, primary_key=True)
+    id_sessao = db.Column(db.Integer, db.ForeignKey('sessao.id_sessao', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    status = db.Column(db.String(40), nullable=False)
+    valor_total = db.Column(db.Numeric(10, 2), nullable=False, server_default=db.text('0.00'))
+    tempo_estimado = db.Column(db.Integer)
+    endereco_entrega = db.Column(db.String(255))
+    chave_idempotencia = db.Column(db.String(64))
+    hash_requisicao = db.Column(db.String(64))
+    observacoes = db.Column(db.String(500))
+    preparo_em = db.Column(db.DateTime)
+    pronto_em = db.Column(db.DateTime)
+    entregue_em = db.Column(db.DateTime)
+    cancelado_em = db.Column(db.DateTime)
+    __table_args__ = (
+        db.UniqueConstraint('id_sessao', 'chave_idempotencia', name='uq_pedido_idempotencia'),
+        db.CheckConstraint('valor_total >= 0', name='chk_pedido_valor'),
+        db.CheckConstraint('tempo_estimado IS NULL OR tempo_estimado >= 0', name='chk_pedido_tempo'),
+    )
+    criado_em = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
-    @classmethod
-    def obter(cls, id_pedido):
-        pedido = next((item for item in cls._pedidos if item["id"] == id_pedido), None)
-        return deepcopy(pedido)
 
-    @classmethod
-    def listar(cls):
-        return deepcopy(cls._pedidos)
+class Pedido_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
+    entidade = Pedido
+    campos_atualizaveis = ['status','valor_total','tempo_estimado','endereco_entrega']
 
     @classmethod
-    def criar(cls, id_sessao, itens, valor_total, observacao=""):
-        pedido = {
-            "id": max((item["id"] for item in cls._pedidos), default=200) + 1,
-            "id_sessao": id_sessao,
-            "itens": deepcopy(itens),
-            "valor_total": round(valor_total, 2),
-            "observacao": observacao,
-            "status": "recebido",
-            "criado_em": datetime.now().isoformat(timespec="seconds"),
-        }
-        cls._pedidos.append(pedido)
-        return deepcopy(pedido)
+    def inserir_pedido(cls, id_sessao, status, valor_total=0.0, tempo_estimado=None, endereco_entrega=None, *, confirmar=True): # Insere um novo registro no banco.
+        registro = Pedido(
+            id_sessao=id_sessao,
+            status=status,
+            valor_total=valor_total,
+            tempo_estimado=tempo_estimado,
+            endereco_entrega=endereco_entrega,
+        )
+        return cls._inserir(registro, confirmar)
+
+    @classmethod
+    def obter_pedido(cls, id_pedido): # Retorna o registro pela chave primária, ou None se não existir.
+        return cls._obter(id_pedido)
+
+    @classmethod
+    def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
+        return cls._listar(filtros)
+
+    @classmethod
+    def atualizar_pedido(cls, id_pedido, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
+        return cls._atualizar(id_pedido, campos, confirmar)
+
+    @classmethod
+    def deletar_pedido(cls, id_pedido, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
+        return cls._deletar(id_pedido, confirmar)
