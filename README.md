@@ -4,23 +4,65 @@ Aplicação HTML/CSS/JavaScript com API Flask e persistência MySQL. Fluxo: **re
 
 ## Execução local
 
-No Windows 10, instale Python 3.10+ e MySQL 8, inicie o MySQL e crie um esquema vazio. Na raiz do projeto, execute:
+### Windows 10
+
+1. Baixe o instalador de 64 bits do Python 3.10 ou superior. Se usar o instalador tradicional, marque **Add Python to PATH** e mantenha o `pip` selecionado. Abra um novo PowerShell e confira com `python --version` ou `py -3 --version`. [Downloads do Python para Windows](https://www.python.org/downloads/windows/)
+2. Instale o **MySQL Server 8**. Selecione uma versão compatível com a sua edição do Windows. No configurador, habilite TCP/IP, use a porta `3306` (ou anote a porta escolhida), defina a senha de `root` e configure o servidor como serviço do Windows. Confira em `services.msc` se o serviço está em execução. O MySQL Workbench é opcional. [MySQL Installer para Windows](https://dev.mysql.com/downloads/installer/) · [Manual de instalação do MySQL](https://dev.mysql.com/doc/refman/8.4/en/windows-installation.html)
+
+### Linux (Ubuntu)
+
+Instale o Python, o suporte a ambientes virtuais e o MySQL pelo APT. Estes comandos são para o Ubuntu. Em outras distribuições, use o gerenciador de pacotes correspondente e confirme que o servidor instalado é MySQL 8. [Guia do MySQL no Linux](https://dev.mysql.com/doc/refman/8.4/en/linux-installation-native.html)
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv mysql-server
+sudo systemctl enable --now mysql
+python3 --version
+mysql --version
+```
+
+### Criar o banco e configurar o projeto
+
+Abra o console do MySQL com uma conta administrativa. No Windows, use o **MySQL Command Line Client** do menu Iniciar ou conecte-se como `root` pelo Workbench. No Ubuntu, tente `sudo mysql`. Se o servidor estiver configurado para autenticação por senha, use `mysql -u root -p`.
+
+Para uma instalação nova, execute o SQL abaixo. Substitua `SUA_SENHA_MYSQL` por uma senha própria antes de executar. A conta `saboreclic_app` recebe permissões apenas no banco do projeto.
+
+```sql
+CREATE DATABASE IF NOT EXISTS saboreclic CHARACTER SET utf8mb4;
+CREATE USER 'saboreclic_app'@'localhost' IDENTIFIED BY 'SUA_SENHA_MYSQL';
+GRANT ALL PRIVILEGES ON saboreclic.* TO 'saboreclic_app'@'localhost';
+```
+
+Na raiz do projeto, copie `.env.example` para `.env` se o arquivo ainda não existir. Preencha os valores com os dados do banco que você criou.
+
+```dotenv
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=saboreclic
+DB_USER=saboreclic_app
+DB_PASSWORD=SUA_SENHA_MYSQL
+COOKIE_SECURE=false
+```
+
+Defina também `SECRET_KEY` com o resultado de `python -c "import secrets; print(secrets.token_hex(32))"` (use `py -3` ou `python3` conforme a instalação). Guarde o `.env` na sua máquina. A senha MySQL é usada pelo Flask para conectar ao banco. As contas demo são usadas na tela de login do Sabor e Clic.
+
+### Executar o instalador
+
+Na raiz do projeto, use o comando da sua plataforma. Os scripts criam o ambiente virtual, instalam as dependências e preparam as tabelas. Remova a opção de demonstração se quiser iniciar sem as contas e os dados de teste.
+
+**Windows (PowerShell)**
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\instalar.ps1 -Demo
 ```
 
-O instalador cria o ambiente virtual, instala as dependências e abre o `.env` no Bloco de Notas na primeira execução. Salve os dados de conexão de uma conta MySQL com permissão para criar tabelas no esquema e confirme no terminal. Use `-Demo` para incluir as contas de demonstração.
-
-### Linux
-
-Com Python 3.10+, suporte a `venv` e MySQL 8 em execução, crie um esquema vazio e, na raiz do projeto, rode:
+**Linux (Bash)**
 
 ```bash
 bash instalar.sh --demo
 ```
 
-Na primeira execução, edite e salve o `.env` em outro terminal antes de confirmar. Use uma conta MySQL com permissão para criar tabelas. A opção `--demo` é opcional. Para iniciar o Flask, rode `../.venv/bin/python run.py` dentro de `backend`.
+Se você começar pelo instalador, ele cria o `.env` com uma chave de sessão e pausa para você preencher os dados do banco. No Windows, o script abre o Bloco de Notas. No Linux, edite o arquivo em outro terminal antes de confirmar.
 
 ### Instalação manual no Windows
 
@@ -70,6 +112,8 @@ Dentro de `backend`, execute:
 ```powershell
 ..\.venv\Scripts\python.exe run.py
 ```
+
+No Linux, execute `../.venv/bin/python run.py` dentro de `backend`.
 
 Acesse [http://127.0.0.1:5000/](http://127.0.0.1:5000/) e entre com a conta cadastrada. O Flask serve o frontend e a API no mesmo endereço. Use `Ctrl+C` para parar o servidor e rode o mesmo comando para reiniciá-lo após uma migração.
 
