@@ -2,7 +2,7 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
-class Prato(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+class Prato(db.Model):
     __tablename__ = 'prato'
 
     id_prato = db.Column(db.Integer, primary_key=True)

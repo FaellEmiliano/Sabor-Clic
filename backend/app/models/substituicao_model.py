@@ -2,7 +2,7 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
-class SubstituicaoIngrediente(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+class SubstituicaoIngrediente(db.Model):
     __tablename__ = 'ingrediente_substituicao'
 
     id_ingrediente_original = db.Column(db.Integer, db.ForeignKey('ingrediente.id_ingrediente', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True)

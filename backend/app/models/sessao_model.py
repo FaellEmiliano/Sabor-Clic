@@ -2,7 +2,7 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
-class Sessao(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+class Sessao(db.Model):
     __tablename__ = 'sessao'
 
     id_sessao = db.Column(db.Integer, primary_key=True)

@@ -10,4 +10,4 @@ As telas incluem observações e endereço por pedido, controle explícito de qu
 
 A API exige autenticação nas consultas de catálogo. Papéis no armazenamento local são somente informação de interface; o servidor faz a autorização. Checkout usa chave de idempotência, preservada após falha de rede.
 
-Testes e limites estão no README da raiz. Não há campos de capacidade/pessoas, categoria ou imagem no modelo final desta versão; os diagramas antigos são históricos. O sistema não usa triggers.
+Testes e limites estão no README da raiz. O [modelo relacional](../Documenta%C3%A7%C3%A3o/MODELO_FINAL.md) descreve os campos e vínculos do esquema atual. O backend atualiza o estoque em transação.

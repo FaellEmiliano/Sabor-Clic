@@ -117,19 +117,21 @@ No Linux, execute `../.venv/bin/python run.py` dentro de `backend`.
 
 Acesse [http://127.0.0.1:5000/](http://127.0.0.1:5000/) e entre com a conta cadastrada. O Flask serve o frontend e a API no mesmo endereço. Use `Ctrl+C` para parar o servidor e rode o mesmo comando para reiniciá-lo após uma migração.
 
-O arquivo `backend/database/SCHEMA.sql` é um dump histórico com comandos `DROP TABLE`. Use os scripts de instalação ou migração acima para preparar o banco.
+O comando `init-db` prepara o banco a partir do esquema e das migrações versionadas em `backend/database/`.
 
 ## Regras implementadas
 
 - Reserva futura, sem sobreposição, em bancada ativa; tarifa por duração em horas calculada pelo servidor. Reagendamento também rejeita passado. Cancelamento permitido enquanto confirmada.
 - Reserva tem zero ou uma sessão; a sessão é criada no check-in, dentro do período reservado. Um cliente pode atender reservas paralelas em bancadas diferentes e selecionar a sessão na interface.
+- O fim do período bloqueia novos pedidos. O encerramento é manual e exige que todos os pedidos estejam entregues ou cancelados. O código de acesso da sessão é um identificador operacional.
 - Pedido usa sessão própria e ativa. Valores, nomes históricos e total são gravados pelo servidor em uma única transação.
 - Checkout exige `Idempotency-Key` com 16–64 caracteres. Mesmo conteúdo e chave retornam o mesmo pedido; reutilizar a chave com conteúdo diferente retorna 409. O frontend preserva a chave após falha de rede e cria outra para uma nova operação.
 - Consumo agregado pela ficha técnica. O ingrediente original é preferido; na falta de saldo, o servidor escolhe um substituto direto com saldo suficiente por prioridade e ID, aplicando o fator de conversão. Não há substituição recursiva nem mistura parcial; o consumo real fica registrado.
+- A alocação reserva os saldos necessários às receitas originais antes de avaliar substitutos. O fator de conversão deve refletir as unidades cadastradas.
 - O estoque é reservado na confirmação. Cancelamento ainda em `recebido` estorna; depois de iniciar preparo não devolve ingredientes automaticamente. Reenvios não geram nova baixa.
 - KDS: `recebido → em_preparo → pronto → entregue`. Cozinha registra estimativa; administrador pode cancelar. Transições armazenam horários reais.
 - Datas são armazenadas em UTC e enviadas em ISO 8601 com offset. Entradas sem offset são interpretadas no horário de São Paulo; a interface exibe São Paulo.
-- Pratos são inativados logicamente. Ingredientes com histórico de movimentação não podem ser excluídos de forma destrutiva pela API.
+- Pratos são inativados logicamente. Ingredientes com histórico de movimentação têm exclusão protegida. Correções de saldo geram novas movimentações.
 
 ## Arquitetura
 
@@ -211,4 +213,4 @@ Para MySQL isolado, configure `QA_DATABASE_URL` para uma instância de testes co
 
 O workflow `.github/workflows/tests.yml` executa as verificações em ambiente descartável quando enviado ao GitHub. A configuração local do workflow não comprova sua execução remota.
 
-Documentação final, decisões e roteiro em `Documentação/final/`. Evidências e limites em `VERIFICACAO.md`.
+A [documentação técnica](Documenta%C3%A7%C3%A3o/Documentacao_final.pdf) reúne o funcionamento do sistema, as evidências e os limites da verificação. A [pasta de documentação](Documenta%C3%A7%C3%A3o/) também contém o dicionário de dados, o modelo relacional, a apresentação e o roteiro. Os documentos do terceiro bimestre ficam em [3º bimestre](Documenta%C3%A7%C3%A3o/3-bimestre/).

@@ -2,7 +2,7 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
-class FichaTecnica(db.Model): # Mapeia a tabela existente no SCHEMA.sql, sem criar ou alterar o banco.
+class FichaTecnica(db.Model):
     __tablename__ = 'ficha_tecnica'
 
     id_prato = db.Column(db.Integer, db.ForeignKey('prato.id_prato', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True)
