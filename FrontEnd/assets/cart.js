@@ -3,6 +3,19 @@ function addCart(id){
   catch(error){showToast(error.message);}
 }
 function delCart(id){state.carrinho.remover(id);saveCart();renderCurrentPage('cliente_carrinho');}
-function changeQuantity(id,value){try{state.carrinho.alterarQuantidade(id,Number(value));saveCart();renderCurrentPage('cliente_carrinho');}catch(error){showToast(error.message);}}
+function changeQuantity(id, input) {
+  const quantity = input.valueAsNumber;
+  if (!input.validity.valid || !Number.isInteger(quantity)) return;
+  state.carrinho.alterarQuantidade(id, quantity);
+  const item = state.cart.find(item => item.id === id);
+  el(`cartSubtotal${id}`).textContent = money(item.subtotalCentavos / 100);
+  el('cartTotal').textContent = money(cartTotal());
+  saveCart();
+}
+
+function restoreCartQuantity(id, input) {
+  const item = state.cart.find(item => item.id === id);
+  input.value = item.qtd;
+}
 function cartTotal(){return state.carrinho.total;}
 function cartItemCount(){return state.carrinho.quantidade;}

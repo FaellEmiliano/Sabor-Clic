@@ -78,6 +78,14 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(r.json['reserva']['valor_total'], 40)
         self.assertEqual(self.reserve().status_code, 409)
 
+    def test_reserva_rejects_period_when_total_exceeds_storage_limit(self):
+        r = self.send('POST', '/api/reservas', {
+            'id_bancada': self.bench, 'inicio': '2444-05-15T06:06',
+            'fim': '5555-05-04T04:04'})
+        self.assertEqual(r.status_code, 400, r.json)
+        self.assertIn('Escolha um período menor', r.json['erro'])
+        self.assertEqual(self.cliente.get('/api/reservas').json['reservas'], [])
+
     def test_order_is_atomic_and_prices_are_server_side(self):
         sid = self.flow()
         r = self.send('POST', '/api/pedidos', {'id_sessao': sid, 'valor_total': 0,

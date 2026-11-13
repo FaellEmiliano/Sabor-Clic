@@ -59,7 +59,15 @@ async function loadPageData(pageId){
    const detail=await api('/sessoes/'+active.id_sessao);pageData.resumo_sessao=detail.resumo;
    const orders=await api('/pedidos?id_sessao='+active.id_sessao+'&pagina='+(resourcePages.pedidos||1));pageData.pedidos=orders.pedidos;Object.assign(pageData.metadados,orders.metadados||{});
  }
- state.carrinho.atualizarCatalogo(products);saveCart();
+ if(pageId==='cliente_carrinho'){
+   const missing=state.cart.filter(item=>!products.some(product=>product.id===item.id));
+   const details=await Promise.allSettled(missing.map(item=>api('/pratos/'+item.id)));
+   const available=details.flatMap(result=>result.status==='fulfilled'?[Prato.fromJSON(result.value.prato)]:[]);
+   state.carrinho.atualizarCatalogo([...products,...available]);
+ }else{
+   state.carrinho.atualizarCatalogo(products);
+ }
+ saveCart();
 }
 async function fetchReferenceOptions(resource,filters=''){
  const key=resource.replaceAll('-','_');const records=[];let page=1;
@@ -176,9 +184,15 @@ function sessionView() {
 }
 function cartView() {
   const session=activeSession();
+  const items = state.cart.map(item => [
+    `<div class="cart-product">${catalogImage(item.imagem, '', true)}<span>${e(item.nome)}</span></div>`,
+    `<input aria-label="Quantidade de ${e(item.nome)}" type="number" min="1" max="1000" value="${item.qtd}" id="cartQty${item.id}" oninput="changeQuantity(${item.id},this)" onblur="restoreCartQuantity(${item.id},this)">`,
+    `<span id="cartSubtotal${item.id}">${money(item.subtotalCentavos / 100)}</span>`,
+    button('Remover', `delCart(${item.id})`, 'danger')
+  ]);
   return head('Carrinho','O preço final é confirmado pelo servidor ao enviar o pedido.')+sessionSelector()+
-    table(['Item','Quantidade','Subtotal','Ação'],state.cart.map(i=>[e(i.nome),`<input aria-label="Quantidade de ${e(i.nome)}" type="number" min="1" max="1000" value="${i.qtd}" id="cartQty${i.id}">`,money(i.preco*i.qtd),button('Atualizar',`changeQuantity(${i.id},document.getElementById('cartQty${i.id}').value)`)+button('Remover',`delCart(${i.id})`,'danger')]))+
-    `<div class="card"><label class="field">Endereço do pedido (opcional)<input id="orderAddress" maxlength="255" value="${e(currentUser.endereco_entrega)}"></label><label class="field">Observações<textarea id="orderNotes" maxlength="500"></textarea></label><p>Total estimado: <b>${money(state.carrinho.total)}</b></p><p>${session?`Sessão #${session.id_sessao}`:'Inicie uma sessão na tela de reservas para fazer um pedido.'}</p><button class="btn" onclick="submitOrder(this)" ${!session||!state.cart.length?'disabled':''}>Enviar pedido</button></div>`;
+    table(['Item','Quantidade','Subtotal','Ação'],items)+
+    `<div class="card"><label class="field">Endereço do pedido (opcional)<input id="orderAddress" maxlength="255" value="${e(currentUser.endereco_entrega)}"></label><label class="field">Observações<textarea id="orderNotes" maxlength="500"></textarea></label><p aria-live="polite">Total estimado: <b id="cartTotal">${money(state.carrinho.total)}</b></p><p>${session?`Sessão #${session.id_sessao}`:'Inicie uma sessão na tela de reservas para fazer um pedido.'}</p><button class="btn" onclick="submitOrder(this)" ${!session||!state.cart.length?'disabled':''}>Enviar pedido</button></div>`;
 }
 async function submitOrder(button) {
   const session=activeSession();

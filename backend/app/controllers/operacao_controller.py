@@ -54,6 +54,10 @@ def reserve(data, record=None):
     end = date(data.get('fim', record.fim if record else None), 'fim')
     if end <= start or start < now():
         fail('Informe um período futuro com fim posterior ao início.')
+    duration_hours = Decimal(str((end - start).total_seconds())) / Decimal('3600')
+    total = (bench.valor_hora * duration_hours).quantize(Decimal('.01'))
+    if total >= Decimal('100000000'):
+        fail('O valor total da reserva excede o limite permitido. Escolha um período menor.')
     query = select(m.Reserva).where(m.Reserva.id_bancada == bid,
         m.Reserva.status.in_(('confirmada', 'em_andamento')),
         m.Reserva.inicio < end, m.Reserva.fim > start)
@@ -66,7 +70,7 @@ def reserve(data, record=None):
         db.session.add(record)
     record.id_cliente, record.id_bancada = uid, bid
     record.inicio, record.fim, record.status = start, end, 'confirmada'
-    record.valor_total = (bench.valor_hora * Decimal(str((end-start).total_seconds())) / Decimal('3600')).quantize(Decimal('.01'))
+    record.valor_total = total
     db.session.commit()
     return record
 

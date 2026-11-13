@@ -32,16 +32,17 @@ class Prato extends Entidade {
   toJSON(){return {id_prato:this.id,nome:this.nome,preco:this.preco,ativo:this.ativo,descricao:this.desc,imagem:this.imagem};}
 }
 class ItemPedido extends Entidade {
-  #nome;#centavos;#quantidade;
-  constructor(prato,quantity=1){super(prato.id);this.#nome=prato.nome;this.#centavos=Prato.centavos(prato.preco);this.qtd=quantity;}
-  static fromJSON(data){return new ItemPedido(new Prato({id_prato:data.id,nome:data.nome,preco:data.preco,ativo:true}),data.qtd);}
+  #nome;#centavos;#quantidade;#imagem;
+  constructor(prato,quantity=1){super(prato.id);this.atualizarProduto(prato);this.qtd=quantity;}
+  static fromJSON(data){return new ItemPedido(new Prato({id_prato:data.id,nome:data.nome,preco:data.preco,ativo:true,imagem:data.imagem}),data.qtd);}
   get nome(){return this.#nome;}
+  get imagem(){return this.#imagem;}
   get preco(){return this.#centavos/100;}
   get qtd(){return this.#quantidade;}
   set qtd(value){if(!Number.isInteger(value)||value<1||value>1000)throw new Error('A quantidade deve estar entre 1 e 1000.');this.#quantidade=value;}
   get subtotalCentavos(){return this.#centavos*this.#quantidade;}
-  atualizarProduto(prato){this.#nome=prato.nome;this.#centavos=Prato.centavos(prato.preco);}
-  toJSON(){return {id:this.id,nome:this.nome,preco:this.preco,qtd:this.qtd};}
+  atualizarProduto(prato){this.#nome=prato.nome;this.#centavos=Prato.centavos(prato.preco);this.#imagem=prato.imagem||null;}
+  toJSON(){return {id:this.id,nome:this.nome,preco:this.preco,qtd:this.qtd,imagem:this.imagem};}
   toPayload(){return {id_prato:this.id,quantidade:this.qtd};}
 }
 class Carrinho {
