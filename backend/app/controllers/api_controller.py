@@ -250,8 +250,8 @@ def cast_column(column,value,query=False):
 
 CATALOGS = {
     'bancadas': (m.Bancada,'bancada',{'nome','descricao','valor_hora','ativa'}, {'nome','valor_hora'}),
-    'pratos': (m.Prato,'prato',{'nome','descricao','preco','ativo'}, {'nome','preco'}),
-    'ingredientes': (m.Ingrediente,'ingrediente',{'nome','unidade_medida','quantidade_estoque'}, {'nome','unidade_medida'}),
+    'pratos': (m.Prato,'prato',{'nome','descricao','preco','ativo','imagem'}, {'nome','preco'}),
+    'ingredientes': (m.Ingrediente,'ingrediente',{'nome','unidade_medida','quantidade_estoque','imagem'}, {'nome','unidade_medida'}),
     'fichas-tecnicas': (m.FichaTecnica,'ficha_tecnica',{'id_prato','id_ingrediente','quantidade_necessaria'}, {'id_prato','id_ingrediente','quantidade_necessaria'}),
     'substituicoes': (m.SubstituicaoIngrediente,'substituicao',{'id_ingrediente_original','id_ingrediente_substituto','prioridade','fator_conversao'}, {'id_ingrediente_original','id_ingrediente_substituto'})
 }
@@ -282,6 +282,9 @@ def catalog(resource, key=None):
     data = payload()
     if not data or set(data) - allowed:
         fail('Campos inválidos para este cadastro.')
+    if 'imagem' in data:
+        from app.controllers.imagem_controller import validate_image_path
+        data['imagem'] = validate_image_path(data['imagem'])
     if record is None and required - set(data):
         fail('Campos obrigatórios: ' + ', '.join(sorted(required)))
     if record is not None and set(data) & set(model.__table__.primary_key.columns.keys()):

@@ -8,6 +8,7 @@ class Prato(db.Model):
     id_prato = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
     descricao = db.Column(db.String(255))
+    imagem = db.Column(db.String(255))
     preco = db.Column(db.Numeric(10, 2), nullable=False)
     ativo = db.Column(db.Boolean, nullable=False, server_default=db.text('1'))
 
@@ -16,7 +17,7 @@ class Prato(db.Model):
 
 class Prato_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
     entidade = Prato
-    campos_atualizaveis = ['nome','descricao','preco','ativo']
+    campos_atualizaveis = ['nome','descricao','preco','ativo','imagem']
 
     @classmethod
     def inserir_prato(cls, nome, preco, descricao=None, ativo=True, *, confirmar=True): # Insere um novo registro no banco.

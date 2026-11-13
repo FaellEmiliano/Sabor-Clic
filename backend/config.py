@@ -26,7 +26,8 @@ class Config:
     LOGIN_IP_LIMIT = 30
     LOGIN_WINDOW_SECONDS = 900
     SESSION_IDLE_MINUTES = 30
-    MAX_CONTENT_LENGTH = 1024 * 1024
+    MAX_CONTENT_LENGTH = 6 * 1024 * 1024
+    UPLOAD_FOLDER = str(Path(__file__).resolve().parent / 'uploads')
 
     @staticmethod
     def environment():
@@ -50,6 +51,7 @@ class Config:
                 pass
             secret = key_path.read_text(encoding='utf-8').strip()
         return {'SQLALCHEMY_DATABASE_URI': uri,
+                'UPLOAD_FOLDER': os.environ.get('UPLOAD_FOLDER', Config.UPLOAD_FOLDER),
                 'SECRET_KEY': secret,
                 'SQLALCHEMY_ENGINE_OPTIONS': {'connect_args': {'init_command': "SET time_zone = '+00:00'"}} if not str(uri).startswith('sqlite') else {},
                 'SESSION_COOKIE_SECURE': os.environ.get('COOKIE_SECURE', 'false').lower() == 'true',

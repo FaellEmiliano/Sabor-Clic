@@ -1,7 +1,6 @@
 """Execute reviewed SQL scripts; schema initialization never generates MySQL DDL from ORM."""
 from pathlib import Path
 import json
-import re
 from datetime import datetime
 from decimal import Decimal
 from sqlalchemy import inspect, text
@@ -28,20 +27,12 @@ def run_script(connection,name):
     for sql in statements(SQL_DIR/name):connection.exec_driver_sql(sql)
 
 
-def migrate():
+def initialize():
     if db.engine.dialect.name!='mysql':
-        raise RuntimeError('init-db/migrate-db exigem MySQL. SQLite é usado apenas nas fixtures de teste.')
+        raise RuntimeError('init-db exige MySQL. SQLite é usado apenas nas fixtures de teste.')
     db.session.remove()
     with db.engine.begin() as connection:
         run_script(connection,'01_modelo_fisico.sql')
-        for sql in statements(SQL_DIR/'03_migracao_integracao.sql'):
-            match=re.match(r'ALTER TABLE `([^`]+)` ADD (COLUMN|CONSTRAINT|UNIQUE KEY) `([^`]+)`',sql)
-            if not match:raise ValueError('Migração desconhecida.')
-            table,kind,name=match.groups();inspector=inspect(connection)
-            if kind=='COLUMN':present={r['name'] for r in inspector.get_columns(table)}
-            elif kind=='CONSTRAINT':present={r['name'] for r in inspector.get_check_constraints(table)}
-            else:present={r['name'] for r in inspector.get_indexes(table)}
-            if name not in present:connection.exec_driver_sql(sql)
 
 
 def seed(password_hash):

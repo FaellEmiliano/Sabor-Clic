@@ -1,6 +1,6 @@
 # Frontend Sabor e Clic
 
-MPA conectada à API Flask. Abra http://127.0.0.1:5000/ após instalar a migração SQL descrita no README da raiz.
+Interface HTML/CSS/JavaScript conectada à API Flask. Siga a [instalação no README principal](../README.md) e abra http://127.0.0.1:5000/.
 
 `domain.js` implementa as entidades ES6 com campos privados, herança e métodos estáticos. `Carrinho` controla quantidades e centavos; `Pedido` serializa IDs/quantidades e identifica uma operação de checkout. O valor cobrado é sempre calculado novamente pelo backend.
 

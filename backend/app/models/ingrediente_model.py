@@ -7,6 +7,7 @@ class Ingrediente(db.Model):
 
     id_ingrediente = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
+    imagem = db.Column(db.String(255))
     unidade_medida = db.Column(db.String(30), nullable=False)
     quantidade_estoque = db.Column(db.Numeric(12, 3), nullable=False, server_default=db.text('0.000'))
 
@@ -15,7 +16,7 @@ class Ingrediente(db.Model):
 
 class Ingrediente_model(Crud_model): # Controla somente os acessos dessa entidade ao banco de dados.
     entidade = Ingrediente
-    campos_atualizaveis = ['nome','unidade_medida','quantidade_estoque']
+    campos_atualizaveis = ['nome','unidade_medida','quantidade_estoque','imagem']
 
     @classmethod
     def inserir_ingrediente(cls, nome, unidade_medida, quantidade_estoque=0, *, confirmar=True): # Insere um novo registro no banco.

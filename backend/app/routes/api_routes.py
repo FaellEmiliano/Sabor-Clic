@@ -2,8 +2,10 @@
 from functools import partial
 from flask import Blueprint
 from app.controllers import api_controller as c
+from app.controllers.imagem_controller import images
 
 api_bp=Blueprint('api',__name__,url_prefix='/api')
+api_bp.add_url_rule('/imagens', 'images', images, methods=['GET', 'POST'])
 api_bp.add_url_rule('/login','login',c.login,methods=['POST'])
 api_bp.add_url_rule('/me','me',c.me,methods=['GET'])
 api_bp.add_url_rule('/logout','logout',c.logout,methods=['POST'])

@@ -17,8 +17,8 @@ class Usuario extends Entidade {
   toJSON(){return {...this.#dados};}
 }
 class Prato extends Entidade {
-  #nome;#centavos;#ativo;#descricao;
-  constructor(data){super(data.id_prato);this.#nome=String(data.nome);this.#centavos=Prato.centavos(data.preco);this.#ativo=!!data.ativo;this.#descricao=data.descricao||'';}
+  #nome;#centavos;#ativo;#descricao;#imagem;
+  constructor(data){super(data.id_prato);this.#nome=String(data.nome);this.#centavos=Prato.centavos(data.preco);this.#ativo=!!data.ativo;this.#descricao=data.descricao||'';this.#imagem=data.imagem||null;}
   static fromJSON(data){return new Prato(data);}
   static centavos(value){const number=Number(value);if(!Number.isFinite(number)||number<0)throw new Error('Preço inválido.');return Math.round(number*100);}
   get id_prato(){return this.id;}
@@ -26,9 +26,10 @@ class Prato extends Entidade {
   get preco(){return this.#centavos/100;}
   get ativo(){return this.#ativo;}
   get desc(){return this.#descricao;}
+  get imagem(){return this.#imagem;}
   get cat(){return 'Cardápio';}
   get status(){return this.#ativo?'Disponível':'Indisponível';}
-  toJSON(){return {id_prato:this.id,nome:this.nome,preco:this.preco,ativo:this.ativo,descricao:this.desc};}
+  toJSON(){return {id_prato:this.id,nome:this.nome,preco:this.preco,ativo:this.ativo,descricao:this.desc,imagem:this.imagem};}
 }
 class ItemPedido extends Entidade {
   #nome;#centavos;#quantidade;

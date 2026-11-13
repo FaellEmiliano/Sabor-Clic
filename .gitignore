@@ -225,3 +225,4 @@ __marimo__/
 output/
 tmp/
 graphify-out/
+backend/uploads/

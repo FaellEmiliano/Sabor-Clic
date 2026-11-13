@@ -26,6 +26,8 @@ def criar_app(configuracao=None):
         raise RuntimeError('Configure SECRET_KEY.')
     db.init_app(app)
     app.register_blueprint(api_bp)
+    from app.controllers.imagem_controller import image_file
+    app.add_url_rule('/media/<filename>', 'image_file', image_file)
 
     @app.before_request
     def access():
@@ -104,10 +106,10 @@ def criar_app(configuracao=None):
     @app.cli.command('init-db')
     @click.option('--demo', is_flag=True, help='Cria as três contas de demonstração com a senha padrão.')
     def init_db(demo):
-        """Create missing tables, without dropping existing data."""
-        from app.database import migrate
-        migrate()
-        click.echo('SQL aplicado sem triggers e sem apagar registros.')
+        """Cria as tabelas do esquema atual para uma instalação nova."""
+        from app.database import initialize
+        initialize()
+        click.echo('Tabelas do esquema atual criadas.')
         if demo:
             criar_contas_demo(senha_padrao_demo)
 

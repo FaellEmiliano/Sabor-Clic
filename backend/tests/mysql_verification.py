@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash
 from config import Config
 from app import criar_app,models as m
 from app.extensions import db
-from app.database import migrate,seed,run_script
+from app.database import initialize,seed,run_script
 from app.controllers.http import now
 
 
@@ -30,7 +30,7 @@ def run():
     app=criar_app({'TESTING':True,'SECRET_KEY':'mysql-qa-only','SQLALCHEMY_DATABASE_URI':source.set(database=schema),'LOGIN_IP_LIMIT':100})
     try:
         with app.app_context():
-            migrate();migrate()
+            initialize();initialize()
             seed(generate_password_hash('Teste1234'));seed(generate_password_hash('Ignored1234'))
             assert db.session.scalar(db.select(db.func.count()).select_from(m.Usuario))==3
             assert db.session.scalar(text('SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema=DATABASE()'))==0
@@ -103,7 +103,7 @@ def run():
             restore(path)
             for name,count in expected.items():assert db.session.scalar(text('SELECT COUNT(*) FROM `'+name+'`'))==count
             for iid,balance in balances.items():assert db.session.get(m.Ingrediente,iid).quantidade_estoque==balance
-        print('MYSQL QA OK: migração repetível, seeds, sem triggers, baixa, estorno, logout, idempotência, backup/restauração, relatórios SQL e concorrência de estoque/reservas.')
+        print('MYSQL QA OK: esquema atual, seeds, sem triggers, baixa, estorno, logout, idempotência, backup/restauração, relatórios SQL e concorrência de estoque/reservas.')
     finally:
         with app.app_context():db.session.remove();db.engine.dispose()
         assert schema.startswith('sabor_clic_qa_') and len(schema)==26 and schema!=source.database

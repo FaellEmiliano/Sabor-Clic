@@ -2,13 +2,14 @@
 let csrfToken = '';
 async function api(path, options = {}) {
   const headers = {...options.headers};
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  const multipart = options.body instanceof FormData;
+  if (options.body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
   let response;
   try {
     response = await fetch((window.SABOR_API_BASE || '/api') + path, {
       ...options, headers, credentials: 'include',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body)
+      body: options.body === undefined ? undefined : multipart ? options.body : JSON.stringify(options.body)
     });
   } catch {
     throw new Error('Não foi possível conectar à API. Abra o sistema pelo servidor Flask.');

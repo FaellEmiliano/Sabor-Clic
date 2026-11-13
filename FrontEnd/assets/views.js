@@ -219,8 +219,8 @@ function dashboard(admin=false) {
 function catalogTable(resource) {
   const definitions={
     bancadas:{title:'Bancadas',headers:['Nome','Tarifa/hora','Ativa'],cells:r=>[e(r.nome),money(r.valor_hora),r.ativa?'Sim':'Não'],key:r=>r.id_bancada},
-    pratos:{title:'Produtos',headers:['Nome','Preço','Ativo'],cells:r=>[e(r.nome),money(r.preco),r.ativo?'Sim':'Não'],key:r=>r.id_prato},
-    ingredientes:{title:'Ingredientes',headers:['Nome','Unidade','Estoque'],cells:r=>[e(r.nome),e(r.unidade_medida),e(r.quantidade_estoque)],key:r=>r.id_ingrediente},
+    pratos:{title:'Produtos',headers:['Foto','Nome','Preço','Ativo'],cells:r=>[catalogImage(r.imagem,r.nome,true),e(r.nome),money(r.preco),r.ativo?'Sim':'Não'],key:r=>r.id_prato},
+    ingredientes:{title:'Ingredientes',headers:['Foto','Nome','Unidade','Estoque'],cells:r=>[catalogImage(r.imagem,r.nome,true),e(r.nome),e(r.unidade_medida),e(r.quantidade_estoque)],key:r=>r.id_ingrediente},
     substituicoes:{title:'Substituições',headers:['Original','Substituto','Prioridade','Fator'],cells:r=>[e(ingredientName(r.id_ingrediente_original)),e(ingredientName(r.id_ingrediente_substituto)),e(r.prioridade),e(r.fator_conversao)],key:r=>`${r.id_ingrediente_original}/substitutos/${r.id_ingrediente_substituto}`},
     'fichas-tecnicas':{title:'Fichas técnicas',headers:['Prato','Ingrediente','Quantidade'],cells:r=>[e(dishName(r.id_prato)),e(ingredientName(r.id_ingrediente)),e(r.quantidade_necessaria)],key:r=>`${r.id_prato}/ingredientes/${r.id_ingrediente}`}
   };
@@ -255,13 +255,16 @@ function recordKey(resource,r) {
 async function editRecord(resource,index) {
   const edit=Number.isInteger(index); const record=edit?pageData[resource.replaceAll('-','_')][index]:{};
   const formOptions={};
-  try{for(const lookup of new Set(schemas[resource].map(field=>field[2]).filter(type=>['pratos','ingredientes'].includes(type))))formOptions[lookup]=await fetchReferenceOptions(lookup);}catch(error){showToast(error.message);return;}
+  const hasImage=['pratos','ingredientes'].includes(resource);
+  let library=[];
+  try{if(hasImage) library=(await api('/imagens')).imagens;for(const lookup of new Set(schemas[resource].map(field=>field[2]).filter(type=>['pratos','ingredientes'].includes(type))))formOptions[lookup]=await fetchReferenceOptions(lookup);}catch(error){showToast(error.message);return;}
   const dialog=document.createElement('dialog'); dialog.className='card'; dialog.style.maxWidth='720px';
-  dialog.innerHTML=`<form><h2>${edit?'Editar':'Adicionar'}</h2><div class="form-grid">${schemas[resource].map(f=>fieldHtml(f,record,edit,formOptions)).join('')}</div><p role="alert"></p><div class="actions"><button type="submit" class="btn">Salvar</button><button type="button" class="btn secondary">Cancelar</button></div></form>`;
+  dialog.innerHTML=`<form><h2>${edit?'Editar':'Adicionar'}</h2><div class="form-grid">${schemas[resource].map(f=>fieldHtml(f,record,edit,formOptions)).join('')}</div>${hasImage?imagePickerHtml(record,library):''}<p role="alert"></p><div class="actions"><button type="submit" class="btn">Salvar</button><button type="button" data-cancel class="btn secondary">Cancelar</button></div></form>`;
   document.body.append(dialog);
   dialog.addEventListener('close',()=>dialog.remove());
-  dialog.querySelector('[type="button"]').onclick=()=>dialog.close();
+  dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();
   const form=dialog.querySelector('form');
+  if(hasImage) bindImagePicker(form);
   if(resource==='usuarios') {
     const updateFields=()=>{
       const type=form.elements.tipo.value;
@@ -283,9 +286,23 @@ async function editRecord(resource,index) {
     if(resource==='usuarios'&&!edit) path+='/'+data.tipo;
     delete data.tipo;
     const submit=form.querySelector('[type="submit"]'); submit.disabled=true;
-    try { await api(path,{method:edit?'PATCH':'POST',body:data}); dialog.close(); showToast('Registro salvo.'); await renderCurrentPage(activePage); }
+    const imagePicker=form.querySelector('.image-picker');
+    if(imagePicker) imagePicker.disabled=true;
+    try {
+      if(hasImage) {
+        const file=form.querySelector('[data-photo-file]').files[0];
+        if(file) {
+          const upload=new FormData(); upload.append('foto',file);
+          const result=await api('/imagens',{method:'POST',body:upload});
+          data.imagem=result.imagem.caminho;
+          form.elements.imagem.value=data.imagem;
+          form.querySelector('[data-photo-file]').value='';
+        }
+        data.imagem=data.imagem||null;
+      }
+      await api(path,{method:edit?'PATCH':'POST',body:data}); dialog.close(); showToast('Registro salvo.'); await renderCurrentPage(activePage); }
     catch(error) { form.querySelector('[role="alert"]').textContent=error.message; }
-    finally { submit.disabled=false; }
+    finally { submit.disabled=false; if(imagePicker) imagePicker.disabled=false; }
   });
   dialog.showModal();
 }
@@ -310,7 +327,7 @@ const views={
   cozinha_pedidos:()=>head('Pedidos','Acompanhe e avance as etapas de preparo.')+orderFilters()+orderCards(pageData.pedidos,true)+pager('pedidos'),
   cozinha_kds:()=>head('KDS','Atualização automática a cada 10 segundos.')+`<section class="kds-board">${['recebido','em_preparo','pronto'].map(status=>`<div class="kds-col"><h2>${e(labelStatus(status))}</h2>${orderCards(pageData.pedidos.filter(p=>p.status===status),true,true)}</div>`).join('')}</section>`+pager('kds','pedidos'),
   cozinha_historico:()=>head('Histórico','Pedidos concluídos e cancelados.')+orderCards(pageData.pedidos.filter(p=>['entregue','cancelado'].includes(p.status)))+pager('pedidos'),
-  cozinha_estoque:()=>head('Disponibilidade do cardápio','Controle dos pratos disponíveis para venda.')+grid(pageData.pratos.map(p=>`<div class="card"><h3>${e(p.nome)}</h3><p>${p.ativo?'Disponível':'Indisponível'}</p>${button('Alternar disponibilidade',`perform('/pratos/${p.id_prato}','PATCH',{ativo:${!p.ativo}},'Disponibilidade atualizada.')`)}</div>`))+pager('pratos'),
+  cozinha_estoque:()=>head('Disponibilidade do cardápio','Controle dos pratos disponíveis para venda.')+grid(pageData.pratos.map(p=>`<div class="card">${catalogImage(p.imagem,p.nome)}<h3>${e(p.nome)}</h3><p>${p.ativo?'Disponível':'Indisponível'}</p>${button('Alternar disponibilidade',`perform('/pratos/${p.id_prato}','PATCH',{ativo:${!p.ativo}},'Disponibilidade atualizada.')`)}</div>`))+pager('pratos'),
   admin_dashboard:()=>dashboard(true),
   admin_reservas:()=>head('Reservas','Gerencie reservas e inicie o atendimento.')+reservationCards()+pager('reservas')+reservationForm(true)+head('Sessões ativas','Encerre após concluir os pedidos.')+grid(pageData.sessoes.filter(s=>s.status==='ativa').map(s=>`<div class="card"><h3>Sessão #${s.id_sessao}</h3>${button('Encerrar',`perform('/sessoes/${s.id_sessao}/encerrar','POST',{},'Sessão encerrada.')`,'danger')}</div>`))+pager('sessoes'),
   admin_bancadas:()=>catalogTable('bancadas'),

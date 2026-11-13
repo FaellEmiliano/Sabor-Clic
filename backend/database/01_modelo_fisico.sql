@@ -1,5 +1,5 @@
 -- Modelo físico final, escrito em SQL. MySQL 8 / InnoDB / utf8mb4.
--- Não apaga tabelas ou registros existentes. Atualizações de tabelas legadas usam migrate-db.
+-- Esquema completo para instalação nova em um banco vazio.
 
 CREATE TABLE IF NOT EXISTS `usuario` (
   `id_usuario` int NOT NULL AUTO_INCREMENT,
@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS `bancada` (
 
 CREATE TABLE IF NOT EXISTS `prato` (
   `id_prato` int NOT NULL AUTO_INCREMENT,
+  `imagem` varchar(255) DEFAULT NULL,
   `nome` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
   `descricao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `preco` decimal(10,2) NOT NULL,
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `prato` (
 
 CREATE TABLE IF NOT EXISTS `ingrediente` (
   `id_ingrediente` int NOT NULL AUTO_INCREMENT,
+  `imagem` varchar(255) DEFAULT NULL,
   `nome` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
   `unidade_medida` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantidade_estoque` decimal(12,3) NOT NULL DEFAULT '0.000',

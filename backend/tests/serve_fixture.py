@@ -11,7 +11,8 @@ from app.controllers.http import now
 
 temporary = TemporaryDirectory(prefix='sabor-clic-qa-')
 uri = 'sqlite:///' + str(Path(temporary.name) / 'qa.sqlite').replace('\\','/')
-app = criar_app({'TESTING': True, 'SECRET_KEY': 'browser-test-only', 'SQLALCHEMY_DATABASE_URI': uri})
+app = criar_app({'TESTING': True, 'SECRET_KEY': 'browser-test-only', 'SQLALCHEMY_DATABASE_URI': uri,
+                 'UPLOAD_FOLDER': str(Path(temporary.name) / 'uploads')})
 with app.app_context():
     db.create_all()
     client = m.Usuario_model.inserir_cliente('Cliente Teste', 'cliente@teste.com', 'Teste1234')
