@@ -2,6 +2,10 @@
 
 Sistema de restaurante com reservas de bancadas, pedidos, fila da cozinha e controle de estoque. Desenvolvido em HTML, CSS e JavaScript, com API Flask e banco MySQL.
 
+## Demonstração
+
+[Assista ao vídeo de demonstração no YouTube](https://youtu.be/F5SEapfW2SI)
+
 ## Requisitos
 
 - [Python 3.10 ou superior](https://www.python.org/downloads/) com `pip` e suporte a `venv`. No Windows, marque **Add Python to PATH** durante a instalação.
