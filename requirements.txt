@@ -1,1 +1,2 @@
+# Carrega a lista de bibliotecas usadas pelo servidor Python.
 -r backend/requirements.txt

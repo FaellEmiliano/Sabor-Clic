@@ -5,6 +5,7 @@ const path=require('node:path');
 const fs=require('node:fs');
 const {chromium}=require('playwright');
 
+// Abre um navegador para conferir o uso da biblioteca, envio, edição e retirada de fotos e a exibição no cardápio.
 test('photos: library, upload, reuse, edit, remove and customer menu',async()=>{
   const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
   try {

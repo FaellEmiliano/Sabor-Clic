@@ -1,8 +1,11 @@
+// Instala os controles de acessibilidade assim que este arquivo é carregado.
 (() => {
   const KEY = 'sabor-clic-a11y';
   let state={};
   try{const value=JSON.parse(localStorage.getItem(KEY)||'{}');if(value&&typeof value==='object'&&!Array.isArray(value))state=value;}catch{state={};}
 
+  // Embrulha o desenho do ícone em SVG e o oculta para leitores de tela, pois o botão já
+  // traz um rótulo.
   const icon = (path) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
 
@@ -17,6 +20,8 @@
     reset: icon('<path d="M3 12a9 9 0 109-9"/><path d="M3 4v5h5"/>'),
   };
 
+  // Aplica as preferências de leitura à página, atualiza os botões e informa o que está
+  // ligado aos leitores de tela.
   const apply = () => {
     document.documentElement.classList.toggle('a11y-large', state.font === 'large');
     document.documentElement.classList.toggle('a11y-xlarge', state.font === 'xlarge');
@@ -41,6 +46,7 @@
       btn.setAttribute('aria-pressed', String(active));
     });
   };
+  // Guarda as preferências de acessibilidade neste navegador.
   const save = () => localStorage.setItem(KEY, JSON.stringify(state));
 
   const panel = document.createElement('div');
@@ -79,12 +85,15 @@
   document.body.append(trigger, panel);
   apply();
 
+  // Atualiza o aviso de mudança anunciado pelo leitor de tela.
   const status = msg => { document.getElementById('a11yStatus').textContent = msg; };
+  // Alterna o painel e move o foco do teclado para o primeiro controle quando abre.
   trigger.addEventListener('click', () => {
     panel.hidden = !panel.hidden;
     trigger.setAttribute('aria-expanded', String(!panel.hidden));
     if (!panel.hidden) panel.querySelector('button')?.focus();
   });
+  // Aplica a opção escolhida, atualiza a tela e anuncia a mudança.
   panel.addEventListener('click', e => {
     const action = e.target.closest('button')?.dataset.action;
     if (!action) return;
@@ -97,6 +106,7 @@
     if (action === 'reset') { Object.keys(state).forEach(k => delete state[k]); document.body.classList.remove('a11y-focus-helper'); }
     save(); apply(); status('Configuração atualizada.');
   });
+  // A tecla Escape fecha o painel e devolve o foco para o botão de abertura.
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !panel.hidden) {
       panel.hidden = true;

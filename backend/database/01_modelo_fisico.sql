@@ -1,6 +1,7 @@
 -- Modelo físico final, escrito em SQL. MySQL 8 / InnoDB / utf8mb4.
 -- Esquema completo para instalação nova em um banco vazio.
 
+-- Conta comum a todos os perfis. O e-mail é único e a senha fica guardada como hash.
 CREATE TABLE IF NOT EXISTS `usuario` (
   `id_usuario` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -11,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `usuario` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Vincula a conta ao perfil de cliente e guarda seu endereço.
 CREATE TABLE IF NOT EXISTS `cliente` (
   `id_usuario` int NOT NULL,
   `endereco_entrega` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS `cliente` (
   CONSTRAINT `fk_cliente_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Guarda turno e especialidade associados à conta de cozinheiro.
 CREATE TABLE IF NOT EXISTS `cozinheiro` (
   `id_usuario` int NOT NULL,
   `turno` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -26,12 +29,14 @@ CREATE TABLE IF NOT EXISTS `cozinheiro` (
   CONSTRAINT `fk_cozinheiro_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Vínculo que identifica uma conta como administrativa.
 CREATE TABLE IF NOT EXISTS `administrador` (
   `id_usuario` int NOT NULL,
   PRIMARY KEY (`id_usuario`),
   CONSTRAINT `fk_administrador_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Espaço reservável com tarifa por hora e indicação de atividade.
 CREATE TABLE IF NOT EXISTS `bancada` (
   `id_bancada` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -42,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `bancada` (
   CONSTRAINT `chk_bancada_valor` CHECK (`valor_hora` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Produto do cardápio com preço, descrição, foto e disponibilidade.
 CREATE TABLE IF NOT EXISTS `prato` (
   `id_prato` int NOT NULL AUTO_INCREMENT,
   `imagem` varchar(255) DEFAULT NULL,
@@ -53,6 +59,7 @@ CREATE TABLE IF NOT EXISTS `prato` (
   CONSTRAINT `chk_prato_valor` CHECK (`preco` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Insumo com unidade de medida e saldo em estoque.
 CREATE TABLE IF NOT EXISTS `ingrediente` (
   `id_ingrediente` int NOT NULL AUTO_INCREMENT,
   `imagem` varchar(255) DEFAULT NULL,
@@ -63,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `ingrediente` (
   CONSTRAINT `chk_ingrediente_valor` CHECK (`quantidade_estoque` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Liga cliente, bancada e intervalo reservado. Guarda estado e valor.
 CREATE TABLE IF NOT EXISTS `reserva` (
   `id_reserva` int NOT NULL AUTO_INCREMENT,
   `id_cliente` int NOT NULL,
@@ -81,6 +89,7 @@ CREATE TABLE IF NOT EXISTS `reserva` (
   CONSTRAINT `chk_reserva_valor` CHECK (`valor_total` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Atendimento de uma reserva, com código, início e encerramento.
 CREATE TABLE IF NOT EXISTS `sessao` (
   `id_sessao` int NOT NULL AUTO_INCREMENT,
   `id_reserva` int NOT NULL,
@@ -95,6 +104,7 @@ CREATE TABLE IF NOT EXISTS `sessao` (
   CONSTRAINT `fk_sessao_reserva` FOREIGN KEY (`id_reserva`) REFERENCES `reserva` (`id_reserva`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Compra feita em uma sessão, com estado, total e dados para reconhecer reenvios.
 CREATE TABLE IF NOT EXISTS `pedido` (
   `id_pedido` int NOT NULL AUTO_INCREMENT,
   `id_sessao` int NOT NULL,
@@ -118,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `pedido` (
   CONSTRAINT `chk_pedido_tempo` CHECK (`tempo_estimado` IS NULL OR `tempo_estimado` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Linha comprada com quantidade, preço e nome do prato na hora da compra.
 CREATE TABLE IF NOT EXISTS `item_pedido` (
   `id_item_pedido` int NOT NULL AUTO_INCREMENT,
   `id_pedido` int NOT NULL,
@@ -135,6 +146,7 @@ CREATE TABLE IF NOT EXISTS `item_pedido` (
   CONSTRAINT `chk_item_valores` CHECK (`preco_unitario` >= 0 AND `subtotal` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Quantidade de ingrediente para preparar uma unidade de um prato.
 CREATE TABLE IF NOT EXISTS `ficha_tecnica` (
   `id_prato` int NOT NULL,
   `id_ingrediente` int NOT NULL,
@@ -146,6 +158,7 @@ CREATE TABLE IF NOT EXISTS `ficha_tecnica` (
   CONSTRAINT `chk_ficha_quantidade` CHECK ((`quantidade_necessaria` > 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Troca autorizada entre ingredientes, com prioridade e proporção.
 CREATE TABLE IF NOT EXISTS `ingrediente_substituicao` (
   `id_ingrediente_original` int NOT NULL,
   `id_ingrediente_substituto` int NOT NULL,
@@ -159,6 +172,7 @@ CREATE TABLE IF NOT EXISTS `ingrediente_substituicao` (
   CONSTRAINT `chk_substituicao_prioridade` CHECK ((`prioridade` > 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Acesso de uma conta com prazo, versão da senha e indicação de revogação.
 CREATE TABLE IF NOT EXISTS `sessao_autenticacao` (
   `id_sessao_auth` varchar(64) NOT NULL,
   `id_usuario` int NOT NULL,
@@ -172,6 +186,7 @@ CREATE TABLE IF NOT EXISTS `sessao_autenticacao` (
   CONSTRAINT `fk_auth_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Contador de tentativas dentro de uma janela de tempo.
 CREATE TABLE IF NOT EXISTS `limite_acesso` (
   `chave` varchar(64) NOT NULL,
   `inicio` datetime NOT NULL,
@@ -179,6 +194,7 @@ CREATE TABLE IF NOT EXISTS `limite_acesso` (
   PRIMARY KEY (`chave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Histórico com operação, endereço, resultado e identificação da requisição.
 CREATE TABLE IF NOT EXISTS `evento_auditoria` (
   `id_evento` int NOT NULL AUTO_INCREMENT,
   `id_usuario` int DEFAULT NULL,
@@ -192,6 +208,7 @@ CREATE TABLE IF NOT EXISTS `evento_auditoria` (
   CONSTRAINT `fk_auditoria_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Histórico de entradas, saídas e estornos, com a origem quando há pedido.
 CREATE TABLE IF NOT EXISTS `movimentacao_estoque` (
   `id_movimentacao` int NOT NULL AUTO_INCREMENT,
   `id_ingrediente` int NOT NULL,

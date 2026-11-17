@@ -5,6 +5,8 @@ from secrets import token_hex
 from sqlalchemy import URL
 
 
+# Lê pares de nome e valor do arquivo .env local. Ignora linhas vazias e comentários e
+# preserva os valores já definidos no ambiente.
 def load_environment():
     # Existing process variables always take precedence over the local .env.
     path = Path(__file__).resolve().parents[1] / '.env'
@@ -17,6 +19,8 @@ def load_environment():
             os.environ.setdefault(key.strip().strip('"\''), value.strip().strip('\"\''))
 
 
+# Reúne os limites e valores padrão do servidor, incluindo duração de inatividade, tamanho
+# de envio e pasta de fotos.
 class Config:
     JSON_SORT_KEYS = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -29,6 +33,8 @@ class Config:
     MAX_CONTENT_LENGTH = 6 * 1024 * 1024
     UPLOAD_FOLDER = str(Path(__file__).resolve().parent / 'uploads')
 
+    # Monta a conexão usando a URL completa ou os campos separados. Define a chave que
+    # protege as sessões, configura o banco em UTC e lê as origens autorizadas.
     @staticmethod
     def environment():
         load_environment()

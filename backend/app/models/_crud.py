@@ -3,6 +3,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 
 
+# Com confirmar=True, torna as mudanças definitivas. Com False, envia as mudanças ao banco
+# para poder confirmar várias juntas mais tarde. Se houver falha, descarta a operação inteira.
 def salvar_alteracoes(confirmar=True): # Confirma a operação ou envia o SQL sem encerrar a transação.
     try:
         if confirmar:
@@ -16,6 +18,7 @@ def salvar_alteracoes(confirmar=True): # Confirma a operação ou envia o SQL se
         raise
 
 
+# Implementação compartilhada usada pelos cadastros para gravar e consultar registros.
 class Crud_model: # Reúne somente as operações de persistência compartilhadas pelos models.
     entidade = None
     campos_atualizaveis = ()
@@ -31,6 +34,7 @@ class Crud_model: # Reúne somente as operações de persistência compartilhada
         return db.session.get(cls.entidade, chave)
 
     @classmethod
+    # Recusa filtros que não correspondem à tabela antes de executar a busca.
     def _listar(cls, filtros): # Filtra apenas pelas colunas reais e ordena pela chave primária.
         colunas = cls.entidade.__table__.columns
         desconhecidos = set(filtros) - set(colunas.keys())
@@ -40,6 +44,8 @@ class Crud_model: # Reúne somente as operações de persistência compartilhada
         return list(db.session.scalars(consulta).all())
 
     @classmethod
+    # Confere se todos os campos podem mudar antes de editar o registro.
+    # Quando a identificação não existe, devolve None.
     def _atualizar(cls, chave, campos, confirmar=True): # Atualiza somente as colunas liberadas pelo model.
         desconhecidos = set(campos) - set(cls.campos_atualizaveis)
         if desconhecidos:
@@ -53,6 +59,7 @@ class Crud_model: # Reúne somente as operações de persistência compartilhada
         return registro
 
     @classmethod
+    # Devolve False se não houver registro e True se a exclusão foi solicitada ao banco.
     def _deletar(cls, chave, confirmar=True): # Exclui o registro respeitando as restrições do banco.
         registro = cls._obter(chave)
         if registro is None:

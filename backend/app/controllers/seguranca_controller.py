@@ -9,10 +9,14 @@ from app.models import SessaoAutenticacao, LimiteAcesso, EventoAuditoria
 from app.controllers.http import fail, now
 
 
+# Calcula um código SHA-256 a partir do texto. O banco pode usar o código para comparação
+# sem guardar o identificador original.
 def fingerprint(value):
     return sha256(value.encode()).hexdigest()
 
 
+# Conta tentativas por endereço de rede e por identificação dentro de um período. Reinicia
+# contadores antigos e rejeita novas tentativas quando algum limite é atingido.
 def check_rate(identity):
     current=now()
     for value,limit in [('ip:'+str(request.remote_addr),current_app.config['LOGIN_IP_LIMIT']),(identity,current_app.config['LOGIN_LIMIT'])]:
@@ -35,11 +39,14 @@ def check_rate(identity):
         db.session.commit()
 
 
+# Zera o contador da identificação informada e reinicia a contagem de tempo.
 def reset_rate(identity):
     db.session.execute(db.update(LimiteAcesso).where(LimiteAcesso.chave==fingerprint(identity)).values(tentativas=0,inicio=now()))
     db.session.commit()
 
 
+# Invalida a sessão anterior daquele navegador, cria uma nova com validade de oito horas e
+# guarda o identificador e o código de proteção na sessão do navegador.
 def start_login(user):
     old=session.get('sid')
     if old:
@@ -56,6 +63,9 @@ def start_login(user):
     session.permanent=True
 
 
+# Confere se a sessão pertence à conta, usa a senha atual e ainda está válida. Revoga
+# sessões inativas por tempo demais e atualiza o horário de uso em intervalos de mais de um
+# minuto.
 def authenticated(user):
     sid=session.get('sid')
     row=db.session.get(SessaoAutenticacao,fingerprint(sid)) if sid else None
@@ -71,6 +81,7 @@ def authenticated(user):
     return True
 
 
+# Revoga no banco a sessão atual e limpa os dados de acesso do navegador.
 def end_login():
     sid=session.get('sid')
     row=db.session.get(SessaoAutenticacao,fingerprint(sid)) if sid else None
@@ -78,6 +89,9 @@ def end_login():
     session.clear()
 
 
+# Registra operações da API e falhas de acesso com conta, horário, caminho e resultado.
+# Ignora consultas bem-sucedidas e erros internos. Se a gravação falhar, registra o erro e
+# devolve a resposta original.
 def record_audit(response):
     if not request.path.startswith('/api') or request.method=='OPTIONS' or (request.method in ('GET','HEAD') and response.status_code<400):
         return response

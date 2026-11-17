@@ -1,5 +1,6 @@
 -- Dados de demonstração. Sem senhas reais e sem sobrescrever cadastros.
 -- O comando seed-demo fornece @demo_password_hash por parâmetro protegido.
+-- Cria e vincula as contas iniciais aos perfis usando a senha protegida recebida do servidor.
 INSERT INTO usuario (nome,email,senha_hash,ativo)
 SELECT 'Admin Demonstração','admin@demo.local',@demo_password_hash,1
 WHERE @demo_password_hash IS NOT NULL AND NOT EXISTS (SELECT 1 FROM usuario WHERE email='admin@demo.local');
@@ -15,6 +16,7 @@ SELECT 'Chef Demonstração','chef@demo.local',@demo_password_hash,1
 WHERE @demo_password_hash IS NOT NULL AND NOT EXISTS (SELECT 1 FROM usuario WHERE email='chef@demo.local');
 INSERT INTO cozinheiro (id_usuario,turno,especialidade)
 SELECT id_usuario,'noite','cozinha geral' FROM usuario WHERE email='chef@demo.local' AND NOT EXISTS (SELECT 1 FROM cozinheiro c WHERE c.id_usuario=usuario.id_usuario);
+-- Cadastra o espaço, o prato e os insumos usados no roteiro de demonstração.
 INSERT INTO bancada (nome,descricao,valor_hora,ativa)
 SELECT 'Bancada demonstração','Espaço para o roteiro de apresentação',20,1 WHERE NOT EXISTS (SELECT 1 FROM bancada WHERE nome='Bancada demonstração');
 INSERT INTO prato (nome,descricao,preco,ativo)
@@ -23,11 +25,13 @@ INSERT INTO ingrediente (nome,unidade_medida,quantidade_estoque)
 SELECT 'Arroz demonstração','kg',0 WHERE NOT EXISTS (SELECT 1 FROM ingrediente WHERE nome='Arroz demonstração');
 INSERT INTO ingrediente (nome,unidade_medida,quantidade_estoque)
 SELECT 'Quinoa demonstração','kg',0 WHERE NOT EXISTS (SELECT 1 FROM ingrediente WHERE nome='Quinoa demonstração');
+-- Aumenta o saldo apenas se a entrada correspondente ainda não existir no histórico.
 UPDATE ingrediente i SET quantidade_estoque=quantidade_estoque+10
 WHERE nome IN ('Arroz demonstração','Quinoa demonstração') AND NOT EXISTS (SELECT 1 FROM movimentacao_estoque m WHERE m.chave_evento=CONCAT('seed:',i.id_ingrediente));
 INSERT INTO movimentacao_estoque (id_ingrediente,tipo,quantidade,chave_evento)
 SELECT id_ingrediente,'entrada',10,CONCAT('seed:',id_ingrediente) FROM ingrediente
 WHERE nome IN ('Arroz demonstração','Quinoa demonstração') AND NOT EXISTS (SELECT 1 FROM movimentacao_estoque m WHERE m.chave_evento=CONCAT('seed:',ingrediente.id_ingrediente));
+-- Define o consumo de arroz por risoto e, no comando seguinte, a quinoa como substituta.
 INSERT INTO ficha_tecnica (id_prato,id_ingrediente,quantidade_necessaria)
 SELECT p.id_prato,i.id_ingrediente,0.2 FROM prato p JOIN ingrediente i ON i.nome='Arroz demonstração'
 WHERE p.nome='Risoto demonstração' AND NOT EXISTS (SELECT 1 FROM ficha_tecnica f WHERE f.id_prato=p.id_prato AND f.id_ingrediente=i.id_ingrediente);
@@ -229,9 +233,11 @@ WHERE ROW_COUNT() = 1;
 INSERT INTO prato (nome, descricao, preco, ativo, imagem)
 SELECT 'Bruschetta de tomate e manjericão', 'Pão italiano tostado com tomate fresco, manjericão e azeite.', 24, 1, '/assets/img/products/bruschetta.jpg'
 WHERE NOT EXISTS (SELECT 1 FROM prato WHERE nome = 'Bruschetta de tomate e manjericão');
+-- Guarda o número do prato só quando a inserção cria um registro. O padrão se repete para cada receita.
 SET @demo_prato_id = IF(ROW_COUNT() = 1, LAST_INSERT_ID(), NULL);
 
 INSERT INTO ficha_tecnica (id_prato, id_ingrediente, quantidade_necessaria)
+-- Localiza cada ingrediente pelo nome e liga ao prato a quantidade usada por unidade.
 SELECT @demo_prato_id, MIN(i.id_ingrediente), receita.quantidade
 FROM (
     SELECT 'Pão italiano' AS ingrediente, 'kg' AS unidade, 0.12 AS quantidade

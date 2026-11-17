@@ -1,21 +1,30 @@
+// Substitui caracteres especiais para que textos recebidos sejam exibidos como texto comum,
+// sem virar marcação HTML.
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+// Monta o cabeçalho de uma seção com título, descrição e uma ação opcional.
 function head(title,desc,action='') {
   return `<div class="page-head"><div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(desc)}</p></div>${action}</div>`;
 }
+// Monta um cartão com o nome e o valor de um indicador.
 function stat(label,value,extra='') {
   return `<div class="card stat"><div class="meta">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div><div class="delta muted">${escapeHtml(extra)}</div></div>`;
 }
+// Monta o cartão de um prato com foto, informações e a ação de adicionar ao carrinho.
 function productCard(p) {
   return `<div class="card">${catalogImage(p.imagem,p.nome)}<h3>${escapeHtml(p.nome)}</h3><p class="meta">${escapeHtml(p.desc)}</p><div class="detail-row"><b>${money(p.preco)}</b><span class="badge">${escapeHtml(p.status)}</span></div><button class="btn" ${p.status!=='Disponível'?'disabled':''} onclick="addCart(${p.id})">Adicionar</button></div>`;
 }
+// Devolve o caminho da foto ou o caminho da imagem padrão quando o item está sem foto.
 function imageSource(path) {
   return typeof path==='string' && /^\/(assets\/img\/products\/[a-z0-9-]+\.jpg|media\/[a-f0-9]{32}\.webp)$/.test(path) ? path : '/assets/img/sem-foto.svg';
 }
+// Monta a marcação da foto com texto alternativo e tamanho opcional de miniatura.
 function catalogImage(path,name,small=false) {
   return `<img class="catalog-photo${small?' thumbnail':''}" src="${escapeHtml(imageSource(path))}" alt="${escapeHtml(name)}" loading="lazy" onerror="this.onerror=null;this.src='/assets/img/sem-foto.svg'">`;
 }
+// Monta o seletor de fotos com prévia, imagens da biblioteca, envio de arquivo e opção de
+// remover a foto.
 function imagePickerHtml(record,library) {
   return `<fieldset class="image-picker"><legend>Foto (opcional)</legend>
     <input type="hidden" name="imagem" value="${escapeHtml(record.imagem||'')}">
@@ -27,11 +36,14 @@ function imagePickerHtml(record,library) {
     ${library.map(item=>`<button type="button" class="photo-option" data-photo-path="${escapeHtml(item.caminho)}" aria-label="${escapeHtml(item.nome)}" aria-pressed="${record.imagem===item.caminho}">${catalogImage(item.caminho,item.nome,true)}<span>${escapeHtml(item.nome)}</span><small>${item.origem==='upload'?'Enviada':'Biblioteca'}</small></button>`).join('')}
     </div></fieldset>`;
 }
+// Liga os controles do seletor. Atualiza a prévia quando a foto muda e valida o arquivo
+// selecionado antes de mostrar a imagem.
 function bindImagePicker(form) {
   const fileInput=form.querySelector('[data-photo-file]');
   const preview=form.querySelector('[data-photo-preview]');
   const options=[...form.querySelectorAll('[data-photo-path]')];
   let reader;
+  // Escolhe uma foto da biblioteca ou limpa a seleção e atualiza a prévia.
   const select=path=>{
     if(reader) reader.abort();
     fileInput.value=''; form.elements.imagem.value=path;
@@ -41,6 +53,7 @@ function bindImagePicker(form) {
   };
   options.forEach(option=>option.addEventListener('click',()=>select(option.dataset.photoPath)));
   form.querySelector('[data-photo-clear]').addEventListener('click',()=>select(''));
+  // Confere se o arquivo pode ser usado e lê uma prévia local, antes de qualquer envio.
   fileInput.addEventListener('change',()=>{
     if(reader) reader.abort();
     const file=fileInput.files[0];
@@ -55,8 +68,11 @@ function bindImagePicker(form) {
     reader=new FileReader(); reader.onload=()=>{preview.src=reader.result;}; reader.readAsDataURL(file);
   });
 }
+// Monta uma mensagem para quando a consulta não encontra registros.
 function empty(message='Nenhum registro encontrado.') { return `<p class="card">${escapeHtml(message)}</p>`; }
+// Organiza os cartões em uma grade de três colunas ou mostra a mensagem de lista vazia.
 function grid(cards) { return cards.length ? `<section class="grid cols-3">${cards.join('')}</section>` : empty(); }
+// Transforma títulos de coluna e linhas de dados em uma tabela para a tela.
 function table(headers,rows) {
   return rows.length ? `<section class="card table-wrap"><table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></section>` : empty();
 }

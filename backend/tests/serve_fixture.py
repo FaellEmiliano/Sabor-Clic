@@ -9,10 +9,12 @@ from app.extensions import db
 from app import models as m
 from app.controllers.http import now
 
+# Usa um banco e uma pasta de fotos temporários para os testes da interface.
 temporary = TemporaryDirectory(prefix='sabor-clic-qa-')
 uri = 'sqlite:///' + str(Path(temporary.name) / 'qa.sqlite').replace('\\','/')
 app = criar_app({'TESTING': True, 'SECRET_KEY': 'browser-test-only', 'SQLALCHEMY_DATABASE_URI': uri,
                  'UPLOAD_FOLDER': str(Path(temporary.name) / 'uploads')})
+# Prepara contas dos três perfis, cardápio e uma sessão já ativa para fazer pedidos.
 with app.app_context():
     db.create_all()
     client = m.Usuario_model.inserir_cliente('Cliente Teste', 'cliente@teste.com', 'Teste1234')
@@ -27,6 +29,7 @@ with app.app_context():
     reservation = m.Reserva_model.inserir_reserva(client.id_usuario,bench.id_bancada,now()-timedelta(minutes=1),now()+timedelta(hours=2),'em_andamento',40)
     m.Sessao_model.inserir_sessao(reservation.id_reserva,'fixture-only','ativa',iniciado_em=now())
 
+# Inicia o servidor local quando este arquivo é executado pelo comando de testes.
 if __name__=='__main__':
     print('Fixture PID:',os.getpid(),flush=True)
     app.run(host='127.0.0.1',port=int(os.environ.get('QA_PORT','5051')),debug=False)

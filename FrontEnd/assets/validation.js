@@ -1,4 +1,7 @@
+// Devolve uma mensagem quando faltam horários, as datas são inválidas, o fim vem antes do
+// início ou o início já passou. Devolve texto vazio quando o período é válido.
 function reservationPeriodError(start,end,now=new Date()) {
+  // Interpreta os campos sem fuso como horários de São Paulo antes de comparar as datas.
   const parse=value=>new Date(value&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)?value+'-03:00':value);
   const first=parse(start), last=parse(end);
   if(!start||!end||!Number.isFinite(first.getTime())||!Number.isFinite(last.getTime())) return 'Informe início e fim válidos.';

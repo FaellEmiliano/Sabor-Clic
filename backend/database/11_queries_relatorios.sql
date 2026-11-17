@@ -1,4 +1,5 @@
 -- Consultas analíticas SQL. Período [@inicio,@fim), configurável antes da execução.
+-- Usa datas amplas quando o operador não informa um período. Inclui o início e exclui o fim.
 SET @inicio = COALESCE(@inicio, '2000-01-01');
 SET @fim = COALESCE(@fim, '2100-01-01');
 -- Vendas e ticket médio dos pedidos efetivamente entregues.
@@ -19,5 +20,6 @@ SELECT b.id_bancada,b.nome,COUNT(r.id_reserva) AS reservas,
 FROM bancada b LEFT JOIN reserva r ON r.id_bancada=b.id_bancada AND r.status<>'cancelada' AND r.inicio>=@inicio AND r.inicio<@fim
 GROUP BY b.id_bancada,b.nome;
 -- Auditoria operacional por resultado e dia, sem segredos ou payloads pessoais.
+-- Agrupa as operações pelo dia e pelo código devolvido ao navegador.
 SELECT DATE(criado_em) AS dia,resultado,COUNT(*) AS eventos FROM evento_auditoria
 WHERE criado_em>=@inicio AND criado_em<@fim GROUP BY DATE(criado_em),resultado ORDER BY dia;

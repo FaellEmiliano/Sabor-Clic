@@ -4,17 +4,32 @@ let activePage = '';
 let refreshTimer;
 let pageLoading = false;
 const e = escapeHtml;
+// Traduz os estados do banco para os nomes exibidos na tela.
 const labelStatus = status => ({confirmada:'Confirmada',em_andamento:'Em andamento',concluida:'Concluída',cancelada:'Cancelada',ativa:'Ativa',encerrada:'Encerrada',recebido:'Recebido',em_preparo:'Em preparo',pronto:'Pronto',entregue:'Entregue',cancelado:'Cancelado'}[status] || status);
+// Exibe o estado como um rótulo ao lado do registro.
 const badge = status => `<span class="badge">${e(labelStatus(status))}</span>`;
+// Prepara um botão com o texto e a ação de clique escolhidos pela tela.
 const button = (label,action,style='secondary') => `<button class="btn ${style}" onclick="${action}">${e(label)}</button>`;
+// Mostra data e hora de São Paulo ou um traço se a data estiver ausente.
 const dates = value => value ? new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}).format(new Date(value)) : '—';
+// Converte a data para o horário de São Paulo no formato aceito pelo campo de data e hora da
+// página.
 function dateToInput(value){const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(value));return parts.replace(' ','T');}
+// Procura o nome da bancada carregada. Quando não encontra, exibe o número da bancada.
 function benchName(id) { return (pageData.bancadas || []).find(b=>b.id_bancada===id)?.nome || `Bancada #${id}`; }
+// Procura o nome do prato carregado e usa seu número como alternativa.
 function dishName(id) { return (pageData.pratos || []).find(p=>p.id_prato===id)?.nome || `Prato #${id}`; }
+// Mostra o nome do ingrediente encontrado ou identifica pelo número se não estiver na lista.
 function ingredientName(id) { return (pageData.ingredientes || []).find(i=>i.id_ingrediente===id)?.nome || `Ingrediente #${id}`; }
+// Mostra o nome do usuário encontrado ou identifica o cliente pelo número.
 function userName(id) { return (pageData.usuarios || []).find(u=>u.id_usuario===id)?.nome || `Cliente #${id}`; }
+// Busca a sessão ativa selecionada por esta conta. Se ela não estiver disponível, usa a
+// primeira sessão ativa da lista.
 function activeSession(){const list=(pageData.sessoes||[]).filter(s=>s.status==='ativa');const id=Number(localStorage.getItem('selected-session:'+currentUser.id_usuario)||0);return list.find(s=>s.id_sessao===id)||list[0];}
+// Oferece uma lista para escolher o atendimento quando há pelo menos duas sessões ativas.
 function sessionSelector(){const list=(pageData.sessoes||[]).filter(s=>s.status==='ativa');if(list.length<2)return '';return `<label class="field">Sessão do atendimento<select onchange="selectSession(this.value)">${list.map(s=>`<option value="${s.id_sessao}" ${activeSession()?.id_sessao===s.id_sessao?'selected':''}>Sessão #${s.id_sessao} · Reserva #${s.id_reserva}</option>`).join('')}</select></label>`;}
+// Guarda a escolha de atendimento no navegador, volta os pedidos à primeira página e
+// atualiza a tela.
 function selectSession(id){localStorage.setItem('selected-session:'+currentUser.id_usuario,id);resourcePages.pedidos=1;renderCurrentPage(activePage);}
 const resourcePages={};
 const resourceSearch={};
@@ -27,6 +42,9 @@ const PAGE_RESOURCES={
  admin_dashboard:['pedidos','relatorios'],admin_reservas:['bancadas','reservas','sessoes','usuarios'],admin_bancadas:['bancadas'],
  admin_produtos:['pratos','ingredientes','fichas-tecnicas'],admin_ingredientes:['ingredientes','movimentacoes'],admin_substituicoes:['ingredientes','substituicoes'],admin_usuarios:['usuarios','auditoria'],admin_relatorios:['relatorios']
 };
+// Busca em paralelo os recursos necessários para a tela e aplica seus filtros. Completa as
+// informações da sessão ativa e recupera pratos do carrinho que não apareceram na página do
+// cardápio.
 async function loadPageData(pageId){
  const resources=PAGE_RESOURCES[pageId]||[];
  const result=await Promise.all(resources.map(resource=>{
@@ -69,19 +87,27 @@ async function loadPageData(pageId){
  }
  saveCart();
 }
+// Busca páginas de até cem registros até reunir todas as opções para preencher os seletores.
 async function fetchReferenceOptions(resource,filters=''){
  const key=resource.replaceAll('-','_');const records=[];let page=1;
  while(true){const result=await api('/'+resource+'?limite=100&pagina='+page+filters);records.push(...result[key]);const meta=result.metadados?.[key];if(!meta||records.length>=meta.total)break;page++;}
  return records;
 }
+// Monta os controles para avançar e voltar com base no total e no tamanho da página da API.
 function pager(resource,key=resource.replaceAll('-','_')){
  const meta=pageData.metadados?.[key];if(!meta||meta.total<=meta.limite)return '';
  return `<div class="actions"><button class="btn secondary" ${meta.pagina===1?'disabled':''} onclick="setResourcePage('${resource}',${meta.pagina-1})">Anterior</button><span>Página ${meta.pagina} de ${Math.ceil(meta.total/meta.limite)} · ${meta.total} registros</span><button class="btn secondary" ${meta.pagina*meta.limite>=meta.total?'disabled':''} onclick="setResourcePage('${resource}',${meta.pagina+1})">Próxima</button></div>`;
 }
+// Guarda o número da página daquele cadastro e atualiza a tela.
 function setResourcePage(resource,page){resourcePages[resource]=page;renderCurrentPage(activePage);}
+// Lê o texto da busca, volta à primeira página do cadastro e busca os resultados para a
+// tela.
 function searchResource(event,resource){event.preventDefault();resourceSearch[resource]=new FormData(event.target).get('q');resourcePages[resource]=1;renderCurrentPage(activePage);}
+// Monta o formulário de busca com o último texto informado para aquele cadastro.
 function searchForm(resource){return `<form class="filterbar" onsubmit="searchResource(event,'${resource}')"><label>Buscar<input name="q" value="${e(resourceSearch[resource]||'')}" placeholder="Nome ou descrição"></label><button class="btn secondary" type="submit">Buscar</button></form>`;}
 
+// Busca os dados, monta a tela certa e trata falhas de acesso ou carregamento. Nas telas de
+// acompanhamento, agenda nova consulta em dez segundos.
 async function renderCurrentPage(pageId,quiet=false) {
   if (pageLoading) return;
   activePage=pageId;
@@ -102,7 +128,10 @@ async function renderCurrentPage(pageId,quiet=false) {
     }
   }
 }
+// Agenda nova consulta da tela em dez segundos.
 function renderLater(pageId) { refreshTimer=setTimeout(()=>renderCurrentPage(pageId,true),10000); }
+// Envia uma alteração ao servidor, mostra uma mensagem de sucesso e atualiza a tela. Quando
+// falha, exibe o erro.
 async function perform(path,method,body,success) {
   try {
     await api(path,{method,body});
@@ -111,9 +140,13 @@ async function perform(path,method,body,success) {
     return true;
   } catch(error) { showToast(error.message); return false; }
 }
+// Monta cartões com bancada, horário e valor. Nas reservas confirmadas, exibe ações para
+// remarcar, iniciar o atendimento ou cancelar.
 function reservationCards() {
   return grid((pageData.reservas||[]).map(r=>`<div class="card"><div class="detail-row"><b>#${r.id_reserva} · ${e(benchName(r.id_bancada))}</b>${badge(r.status)}</div><p>${e(dates(r.inicio))} a ${e(dates(r.fim))}</p><p>${money(r.valor_total)}</p>${r.status==='confirmada'?button('Reagendar',`editReservation(${r.id_reserva})`)+button('Iniciar sessão',`perform('/sessoes','POST',{id_reserva:${r.id_reserva}},'Sessão iniciada.')`)+button('Cancelar',`perform('/reservas/${r.id_reserva}','PATCH',{status:'cancelada'},'Reserva cancelada.')`,'danger'):''}</div>`));
 }
+// Monta o formulário de agendamento com bancadas ativas e horários. Na área administrativa,
+// permite escolher o cliente.
 function reservationForm(admin=false) {
   return `<form id="reservationForm" class="card" onsubmit="submitReservation(event)"><h2>Nova reserva</h2><div class="form-grid">
     ${admin?`<label>Cliente<select name="id_cliente" required>${(pageData.usuarios||[]).filter(u=>u.tipo==='cliente'&&u.ativo).map(u=>`<option value="${u.id_usuario}">${e(u.nome)}</option>`).join('')}</select></label>`:''}
@@ -121,6 +154,7 @@ function reservationForm(admin=false) {
     <label>Início<input name="inicio" type="datetime-local" required></label><label>Fim<input name="fim" type="datetime-local" required></label></div>
     <p class="meta">O servidor confirma a disponibilidade e calcula o valor pela duração e tarifa da bancada.</p><p role="alert"></p><button class="btn" type="submit">Confirmar reserva</button></form>`;
 }
+// Lê e valida o período, envia a criação ou a remarcação e mostra erros no formulário.
 async function submitReservation(event) {
   event.preventDefault();
   const form=event.target;
@@ -137,6 +171,7 @@ async function submitReservation(event) {
   catch(error) { form.querySelector('[role="alert"]').textContent=error.message; }
   finally { submit.disabled=false; }
 }
+// Abre uma janela já preenchida com os dados da reserva para que a pessoa possa remarcar.
 function editReservation(id) {
   const record=pageData.reservas.find(r=>r.id_reserva===id);
   const dialog=document.createElement('dialog'); dialog.className='card';
@@ -151,6 +186,8 @@ function editReservation(id) {
   const cancel=document.createElement('button'); cancel.type='button'; cancel.className='btn secondary'; cancel.textContent='Cancelar'; cancel.onclick=()=>dialog.close(); form.append(cancel);
   document.body.append(dialog); dialog.addEventListener('close',()=>dialog.remove()); dialog.showModal();
 }
+// Mostra bancada, itens, total e progresso de cada pedido. Na área da cozinha, também monta
+// controles operacionais.
 function orderCards(records,kitchen=false,compact=false){
  const cards=records.map(p=>{
    const next={recebido:'em_preparo',em_preparo:'pronto',pronto:'entregue'}[p.status];
@@ -168,11 +205,17 @@ function orderCards(records,kitchen=false,compact=false){
  });
  return cards.length?(compact?`<div class="list">${cards.join('')}</div>`:grid(cards)):empty();
 }
+// Lê o prazo em minutos e envia a atualização do pedido. Desativa o botão durante o envio.
 async function setEstimate(event,id){event.preventDefault();const form=event.target;const button=form.querySelector('button');button.disabled=true;await perform('/pedidos/'+id,'PATCH',{tempo_estimado:Number(new FormData(form).get('minutos'))},'Estimativa salva.');button.disabled=false;}
+// Pede confirmação antes de enviar ao servidor o cancelamento do pedido.
 async function cancelOrder(id){if(window.confirm('Cancelar este pedido? Ingredientes só serão devolvidos se o preparo ainda não começou.'))await perform('/pedidos/'+id,'PATCH',{status:'cancelado'},'Pedido cancelado.');}
+// Monta os campos para filtrar por estado e número do pedido.
 function orderFilters(){return `<form class="filterbar" onsubmit="applyOrderFilters(event)"><label>Estado<select name="status"><option value="">Todos</option>${['recebido','em_preparo','pronto','entregue','cancelado'].map(s=>`<option value="${s}" ${orderFilter.status===s?'selected':''}>${e(labelStatus(s))}</option>`).join('')}</select></label><label>Número do pedido<input name="id_pedido" type="number" min="1" value="${e(orderFilter.id_pedido||'')}"></label><button class="btn secondary" type="submit">Filtrar</button></form>`;}
+// Guarda os filtros escolhidos, volta à primeira página de pedidos e consulta o servidor
+// novamente.
 function applyOrderFilters(event){event.preventDefault();orderFilter=Object.fromEntries(new FormData(event.target));resourcePages.pedidos=1;renderCurrentPage(activePage);}
 
+// Mostra o atendimento selecionado, seus dados de reserva e pedidos do mesmo atendimento.
 function sessionView() {
   const s=activeSession();
   if(!s) return head('Sessão atual','Nenhuma sessão ativa.')+button('Ver reservas',"go('cliente_reservas')");
@@ -182,6 +225,8 @@ function sessionView() {
     `<section class="grid cols-3">${stat('Pedidos',pageData.resumo_sessao.pedidos)}${stat('Consumo',money(pageData.resumo_sessao.consumo))}${stat('Aluguel',money(r.valor_total))}</section>`+
     `<p>${button('Abrir cardápio',"go('cliente_cardapio')")}${button('Encerrar sessão',`perform('/sessoes/${s.id_sessao}/encerrar','POST',{},'Sessão encerrada.')`,'danger')}</p>`+orderCards(orders)+pager('pedidos');
 }
+// Mostra itens, quantidades e total do carrinho com os controles para revisar e confirmar o
+// pedido.
 function cartView() {
   const session=activeSession();
   const items = state.cart.map(item => [
@@ -194,6 +239,8 @@ function cartView() {
     table(['Item','Quantidade','Subtotal','Ação'],items)+
     `<div class="card"><label class="field">Endereço do pedido (opcional)<input id="orderAddress" maxlength="255" value="${e(currentUser.endereco_entrega)}"></label><label class="field">Observações<textarea id="orderNotes" maxlength="500"></textarea></label><p aria-live="polite">Total estimado: <b id="cartTotal">${money(state.carrinho.total)}</b></p><p>${session?`Sessão #${session.id_sessao}`:'Inicie uma sessão na tela de reservas para fazer um pedido.'}</p><button class="btn" onclick="submitOrder(this)" ${!session||!state.cart.length?'disabled':''}>Enviar pedido</button></div>`;
 }
+// Monta os dados para confirmação do carrinho e reaproveita a chave nas tentativas com o
+// mesmo conteúdo. Quando o servidor confirma, esvazia o carrinho e abre os pedidos.
 async function submitOrder(button) {
   const session=activeSession();
   if(!session||!state.cart.length) return;
@@ -201,6 +248,7 @@ async function submitOrder(button) {
   try {
     const order=new Pedido(session.id_sessao,state.carrinho,{
       endereco_entrega:el('orderAddress')?.value,observacoes:el('orderNotes')?.value});
+    // Guarda a tentativa antes de enviar para que uma queda de conexão permita reenviar sem duplicar.
     const storageKey='pending-order:'+currentUser.id_usuario;
     let pending;
     try{pending=JSON.parse(localStorage.getItem(storageKey)||'null');}catch{pending=null;}
@@ -211,9 +259,11 @@ async function submitOrder(button) {
     state.cart=[]; saveCart(); showToast('Pedido enviado à cozinha.'); go('cliente_pedidos');
   } catch(error) { showToast(error.message); button.disabled=false; }
 }
+// Monta o formulário com os dados da conta atual e os campos que podem ser atualizados.
 function profileView() {
   return head('Meu perfil','Atualize seus dados.')+`<form class="card" onsubmit="saveProfile(event)"><div class="form-grid"><label>Nome<input name="nome" value="${e(currentUser.nome)}" required maxlength="120"></label><label>E-mail<input name="email" type="email" value="${e(currentUser.email)}" required maxlength="180"></label><label>Endereço<input name="endereco_entrega" value="${e(currentUser.endereco_entrega||'')}" maxlength="255"></label><label>Nova senha<input name="senha" type="password" minlength="8" autocomplete="new-password"></label></div><p role="alert"></p><button class="btn" type="submit">Salvar alterações</button></form>`;
 }
+// Envia os dados editados, atualiza o perfil exibido e mostra o resultado do salvamento.
 async function saveProfile(event) {
   event.preventDefault(); const form=event.target; const data=Object.fromEntries(new FormData(form)); if(!data.senha) delete data.senha;
   const submit=form.querySelector('button'); submit.disabled=true;
@@ -223,6 +273,8 @@ async function saveProfile(event) {
   } catch(error) { form.querySelector('[role="alert"]').textContent=error.message; }
   finally { submit.disabled=false; }
 }
+// Monta os indicadores e os cartões de pedidos em andamento para o perfil que abriu o
+// painel.
 function dashboard(admin=false) {
   const orders=pageData.pedidos;
   const summary=admin?{ativos:pageData.relatorios.pedidos_ativos,entregues:pageData.relatorios.pedidos_entregues,em_preparo:null}:pageData.resumo;
@@ -230,6 +282,8 @@ function dashboard(admin=false) {
   if(admin) cards.push(stat('Reservas',pageData.relatorios.reservas),stat('Receita concluída',money(pageData.relatorios.receita_pedidos+pageData.relatorios.receita_reservas)));
   return head(admin?'Dashboard':'Visão geral da cozinha','Dados atuais do sistema.')+`<section class="grid cols-3">${cards.join('')}</section>`+orderCards(orders.filter(p=>!['entregue','cancelado'].includes(p.status)),true)+pager(admin?'pedidos':'kds','pedidos');
 }
+// Escolhe as colunas conforme o cadastro e monta a lista paginada com ações de busca, edição
+// e exclusão ou inativação.
 function catalogTable(resource) {
   const definitions={
     bancadas:{title:'Bancadas',headers:['Nome','Tarifa/hora','Ativa'],cells:r=>[e(r.nome),money(r.valor_hora),r.ativa?'Sim':'Não'],key:r=>r.id_bancada},
@@ -242,6 +296,7 @@ function catalogTable(resource) {
   return head(d.title,'Cadastros persistidos no banco.',button('Adicionar',`editRecord('${resource}')`))+(['bancadas','pratos','ingredientes'].includes(resource)?searchForm(resource):'')+
     table([...d.headers,'Ações'],records.map((r,index)=>[...d.cells(r),button('Editar',`editRecord('${resource}',${index})`)+button(resource==='pratos'?'Inativar':'Excluir',`deleteRecord('${resource}','${d.key(r)}')`,'danger')]))+pager(resource);
 }
+// Cada campo informa o nome usado pelo servidor, o rótulo da tela e o tipo de controle.
 const schemas={
   bancadas:[['nome','Nome','text'],['descricao','Descrição','text'],['valor_hora','Valor por hora','number'],['ativa','Ativa','checkbox']],
   pratos:[['nome','Nome','text'],['descricao','Descrição','text'],['preco','Preço','number'],['ativo','Ativo','checkbox']],
@@ -250,6 +305,8 @@ const schemas={
   substituicoes:[['id_ingrediente_original','Ingrediente original','ingredientes'],['id_ingrediente_substituto','Ingrediente substituto','ingredientes'],['prioridade','Prioridade','number'],['fator_conversao','Fator de conversão','number']],
   usuarios:[['tipo','Perfil','perfis'],['nome','Nome','text'],['email','E-mail','email'],['senha','Senha','password'],['endereco_entrega','Endereço do cliente','text'],['turno','Turno do cozinheiro','text'],['especialidade','Especialidade do cozinheiro','text'],['ativo','Ativo','checkbox']]
 };
+// Monta um campo de formulário do tipo certo, preenche o valor e bloqueia campos que
+// identificam um registro já existente.
 function fieldHtml(field,record,edit,formOptions={}) {
   const [name,label,type]=field;
   const fixed=edit&&(name.startsWith('id_')||name==='tipo');
@@ -261,11 +318,15 @@ function fieldHtml(field,record,edit,formOptions={}) {
   else input=`<input name="${name}" type="${type}" value="${type==='password'?'':e(record[name]??(['prioridade','fator_conversao'].includes(name)?1:name==='quantidade_estoque'?0:''))}" ${['nome','email','valor_hora','preco','unidade_medida','quantidade_necessaria'].includes(name)||type==='password'&&!edit?'required':''} ${type==='number'?'min="0" step="any"':''} ${type==='password'?'minlength="8" autocomplete="new-password"':''}>`;
   return `<label>${e(label)}${input}</label>`;
 }
+// Monta o endereço de um registro. Usa os dois números quando a identificação depende de um
+// par, como prato e ingrediente.
 function recordKey(resource,r) {
   if(resource==='fichas-tecnicas') return `${r.id_prato}/ingredientes/${r.id_ingrediente}`;
   if(resource==='substituicoes') return `${r.id_ingrediente_original}/substitutos/${r.id_ingrediente_substituto}`;
   return r[{bancadas:'id_bancada',pratos:'id_prato',ingredientes:'id_ingrediente',usuarios:'id_usuario'}[resource]];
 }
+// Abre o formulário de criação ou edição com opções buscadas no servidor. Envia a foto
+// primeiro quando há um arquivo e usa seu endereço ao salvar o registro.
 async function editRecord(resource,index) {
   const edit=Number.isInteger(index); const record=edit?pageData[resource.replaceAll('-','_')][index]:{};
   const formOptions={};
@@ -280,6 +341,7 @@ async function editRecord(resource,index) {
   const form=dialog.querySelector('form');
   if(hasImage) bindImagePicker(form);
   if(resource==='usuarios') {
+    // Exibe somente os campos específicos do perfil escolhido no formulário de usuário.
     const updateFields=()=>{
       const type=form.elements.tipo.value;
       for(const name of ['endereco_entrega','turno','especialidade']) {
@@ -289,6 +351,7 @@ async function editRecord(resource,index) {
     };
     form.elements.tipo.addEventListener('change',updateFields); updateFields();
   }
+  // Ao salvar, coleta os campos editáveis, trata caixas de seleção e escolhe entre criar e atualizar.
   form.addEventListener('submit',async event=>{
     event.preventDefault(); const data=Object.fromEntries(new FormData(form));
     for(const [name,,type] of schemas[resource]) if(type==='checkbox'&&!form.elements[name].disabled) data[name]=form.elements[name].checked;
@@ -306,6 +369,7 @@ async function editRecord(resource,index) {
       if(hasImage) {
         const file=form.querySelector('[data-photo-file]').files[0];
         if(file) {
+          // Envia a imagem e aproveita o caminho retornado quando gravar o cadastro.
           const upload=new FormData(); upload.append('foto',file);
           const result=await api('/imagens',{method:'POST',body:upload});
           data.imagem=result.imagem.caminho;
@@ -320,15 +384,19 @@ async function editRecord(resource,index) {
   });
   dialog.showModal();
 }
+// Pede confirmação e envia a exclusão ou inativação do registro selecionado.
 async function deleteRecord(resource,key) {
   if(!window.confirm(resource==='pratos'?'Inativar este prato?':'Excluir este registro? Registros com histórico serão preservados.')) return;
   await perform('/'+resource+'/'+key,'DELETE',undefined,'Registro excluído.');
 }
+// Monta a tabela de usuários com ações administrativas e mostra os eventos de auditoria em
+// outra tabela.
 function usersView() {
   return head('Usuários','Gerencie clientes, cozinheiros e administradores.',button('Adicionar',"editRecord('usuarios')"))+searchForm('usuarios')+
     table(['Nome','E-mail','Perfil','Ativo','Ações'],pageData.usuarios.map((u,index)=>[e(u.nome),e(u.email),e(u.tipo),u.ativo?'Sim':'Não',button('Editar',`editRecord('usuarios',${index})`)+button(u.ativo?'Desativar':'Ativar',`perform('/usuarios/${u.id_usuario}/status','PATCH',{},'Usuário atualizado.')`)+button('Excluir',`deleteRecord('usuarios','${u.id_usuario}')`,'danger')]))+pager('usuarios')+head('Auditoria','Operações críticas, sem senhas ou tokens.')+table(['Data','Usuário','Operação','Recurso','Resultado'],(pageData.eventos||[]).map(a=>[e(dates(a.criado_em)),e(a.id_usuario||'Anônimo'),e(a.acao),e(a.recurso),e(a.resultado)]))+pager('auditoria','eventos');
 }
 const views={
+  // Cada função abaixo monta o conteúdo da tela indicada pelo nome.
   cliente_inicio:()=>head(`Olá, ${currentUser.nome}.`,'Gerencie sua reserva, sessão e pedidos.')+sessionView(),
   cliente_bancadas:benchesView,
   cliente_reservas:()=>head('Minhas reservas','Reservas e horários de atendimento.')+reservationCards()+pager('reservas')+reservationForm(),
@@ -352,6 +420,7 @@ const views={
   admin_relatorios:reportsView
 };
 
+// Apresenta os totais de operação e receita e a tabela por bancada para o período escolhido.
 function reportsView(){
  const r=pageData.relatorios;
  return head('Relatórios','Resultados do período selecionado. Receitas incluem somente atendimentos concluídos.')+
@@ -359,9 +428,15 @@ function reportsView(){
  `<section class="grid cols-3">${stat('Reservas',r.reservas)}${stat('Pedidos',r.pedidos)}${stat('Receita de pedidos',money(r.receita_pedidos))}${stat('Receita de reservas',money(r.receita_reservas))}${stat('Ticket médio',money(r.ticket_medio))}${stat('Tempo médio de preparo',r.tempo_medio_preparo==null?'Sem amostra':r.tempo_medio_preparo.toFixed(1)+' min')}</section>`+
  table(['Bancada','Reservas concluídas','Receita'],r.por_bancada.map(b=>[e(b.nome),e(b.reservas),money(b.receita)]));
 }
+// Transforma as datas em limites de consulta. Usa a meia-noite do dia seguinte como limite
+// final para incluir todo o último dia.
 function applyReportPeriod(event){event.preventDefault();const data=Object.fromEntries(new FormData(event.target));reportPeriod={};if(data.de)reportPeriod.de=data.de+'T00:00:00';if(data.ate){const date=new Date(data.ate+'T00:00:00');date.setDate(date.getDate()+1);reportPeriod.ate=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T00:00:00`;}renderCurrentPage(activePage);}
 
 let availableBenches=null;
+// Monta o formulário para consultar horários e mostra os cartões de bancadas.
 function benchesView(){return head('Bancadas','Consulte a disponibilidade para o período desejado.')+`<form class="filterbar" onsubmit="checkAvailableBenches(event)"><label>Início<input name="inicio" type="datetime-local" required></label><label>Fim<input name="fim" type="datetime-local" required></label><button class="btn secondary" type="submit">Consultar disponibilidade</button></form><div id="benchResults">${benchResults(availableBenches||pageData.bancadas)}</div>`+pager('bancadas');}
+// Exibe nome, descrição, tarifa e estado das bancadas encontradas, com acesso à tela de
+// reserva.
 function benchResults(records){return grid(records.map(b=>`<div class="card"><h3>${e(b.nome)}</h3><p>${e(b.descricao||'')}</p><p>${money(b.valor_hora)}/hora · ${b.ativa?'Ativa':'Indisponível'}</p>${b.ativa?button('Reservar',"go('cliente_reservas')"):''}</div>`));}
+// Valida o período, consulta o servidor e troca a lista exibida pelas bancadas disponíveis.
 async function checkAvailableBenches(event){event.preventDefault();const data=Object.fromEntries(new FormData(event.target));const error=reservationPeriodError(data.inicio,data.fim);if(error){showToast(error);return;}try{const result=await api('/disponibilidade?'+new URLSearchParams(data));availableBenches=result.bancadas;el('benchResults').innerHTML=benchResults(availableBenches);}catch(error){showToast(error.message);}}

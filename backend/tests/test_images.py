@@ -8,7 +8,9 @@ from app.extensions import db
 from app import models as m
 
 
+# Testa o envio, a transformação e a segurança das fotos usadas nos cadastros.
 class ImageTestCase(unittest.TestCase):
+    # Prepara servidor, contas e pasta temporária de imagens.
     def setUp(self):
         self.temp = TemporaryDirectory()
         self.app = criar_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite://',
@@ -21,6 +23,7 @@ class ImageTestCase(unittest.TestCase):
         self.client = self.app.test_client()
         self.login('admin@teste.com')
 
+    # Limpa os dados e a pasta criada para o teste.
     def tearDown(self):
         db.session.remove()
         db.drop_all()
@@ -28,16 +31,22 @@ class ImageTestCase(unittest.TestCase):
         self.ctx.pop()
         self.temp.cleanup()
 
+    # Conecta a conta de teste para exercitar permissões diferentes.
     def login(self, email):
         self.csrf = self.client.post('/api/login', json={'email': email, 'senha': 'senha1234'}).json['csrf_token']
 
+    # Envia os bytes de uma foto com nome de arquivo e, quando solicitado, com o código de
+    # segurança.
     def upload(self, raw, filename='foto.png', csrf=True):
         return self.client.post('/api/imagens', data={'foto': (BytesIO(raw), filename)},
                                 headers={'X-CSRF-Token': self.csrf} if csrf else {})
 
+    # Envia dados ao endereço de cadastro com o código de segurança da sessão.
     def write(self, path, data, method='POST'):
         return self.client.open('/api/'+path, method=method, json=data, headers={'X-CSRF-Token': self.csrf})
 
+    # Confere a redução da foto e o reaproveitamento do seu endereço em pratos e
+    # ingredientes.
     def test_upload_compresses_and_is_reusable_for_both_catalogs(self):
         original = BytesIO()
         Image.new('RGB', (2400, 1600), 'green').save(original, format='JPEG')
@@ -62,12 +71,15 @@ class ImageTestCase(unittest.TestCase):
         with self.client.get(image) as response:
             self.assertEqual(response.status_code, 200)  # Reused images are retained.
 
+    # Confere a rejeição de arquivos inválidos ou maiores que o limite.
     def test_invalid_uploads_and_size_limit(self):
         for raw in [b'<svg onload="alert(1)"></svg>', b'not a picture']:
             self.assertEqual(self.upload(raw).status_code, 400)
         self.assertEqual(self.upload(b'x'*(5*1024*1024+1)).status_code, 413)
         self.assertEqual(list(Path(self.temp.name).iterdir()), [])
 
+    # Confere que as fotos de exemplo aparecem e que endereços fora da biblioteca são
+    # rejeitados.
     def test_library_is_seeded_and_rejects_arbitrary_paths(self):
         stock = self.client.get('/api/imagens').json['imagens']
         self.assertEqual(len(stock), 8)
@@ -77,6 +89,7 @@ class ImageTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
         self.assertEqual(self.client.get('/media/not-a-generated-file.webp').status_code, 404)
 
+    # Confere o limite de pixels e a correção da orientação registrada pela câmera.
     def test_pixel_limit_and_camera_orientation(self):
         raw = BytesIO()
         Image.new('L', (6000, 4000)).save(raw, format='PNG')
@@ -93,6 +106,7 @@ class ImageTestCase(unittest.TestCase):
                 self.assertEqual(image.size, (32, 64))
                 self.assertFalse(image.getexif())
 
+    # Confere que o envio exige uma conta administrativa e o código de segurança.
     def test_upload_requires_admin_and_csrf(self):
         self.assertEqual(self.upload(b'bad', csrf=False).status_code, 403)
         self.login('cliente@teste.com')

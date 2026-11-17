@@ -17,6 +17,8 @@ from app.database import initialize,seed,run_script
 from app.controllers.http import now
 
 
+# Cria um banco MySQL descartável para conferir instalação, pedidos, estoque, reservas
+# simultâneas, relatórios e restauração. Limpa o banco de teste ao terminar.
 def run():
     import os
     source=os.environ.get('QA_DATABASE_URL') or Config.environment()['SQLALCHEMY_DATABASE_URI']
@@ -46,6 +48,8 @@ def run():
             other_bench=m.Bancada_model.inserir_bancada('Concorrência',20)
             reservation=m.Reserva_model.inserir_reserva(uid,other_bench.id_bancada,now()-timedelta(minutes=1),now()+timedelta(hours=1),'em_andamento',20)
             sid2=m.Sessao_model.inserir_sessao(reservation.id_reserva,'QA-2','ativa',iniciado_em=now()).id_sessao
+        # Conecta uma conta de exemplo e devolve o navegador de teste com o cabeçalho de
+        # segurança necessário.
         def login(email='cliente@demo.local'):
             client=app.test_client();r=client.post('/api/login',json={'email':email,'senha':'Teste1234'})
             assert r.status_code==200,r.json
@@ -71,6 +75,8 @@ def run():
                 movement(ingredient.id_ingrediente,-ingredient.quantidade_estoque,'ajuste')
             db.session.commit()
         barrier=Barrier(2)
+        # Espera a outra tentativa e então envia um pedido para disputar o mesmo estoque ao
+        # mesmo tempo.
         def checkout(sid):
             client,headers=login();headers['Idempotency-Key']=uuid4().hex;barrier.wait(timeout=10)
             return client.post('/api/pedidos',json={'id_sessao':sid,'itens':[{'id_prato':pid,'quantidade':4}]},headers=headers).status_code
@@ -80,6 +86,8 @@ def run():
         # Two simultaneous reservations on a fresh interval: one winner only.
         barrier=Barrier(2)
         start=(now()+timedelta(days=2)).replace(tzinfo=timezone.utc)
+        # Espera a outra tentativa e então tenta reservar a mesma bancada e período de forma
+        # concorrente.
         def reserve(_):
             client,headers=login();barrier.wait(timeout=10)
             return client.post('/api/reservas',json={'id_bancada':bid,'inicio':start.isoformat(),'fim':(start+timedelta(hours=1)).isoformat()},headers=headers).status_code

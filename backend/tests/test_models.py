@@ -18,7 +18,9 @@ with patch.dict(os.environ, {"DB_USER": "teste", "DB_PASSWORD": "teste", "DB_NAM
     from app import models as m
 
 
+# Confere as classes que representam as tabelas e as operações de cadastro no banco.
 class ModelTestCase(TestCase):
+    # Configura banco e contexto de teste com verificação de vínculos entre tabelas.
     def setUp(self):
         self.app = Flask(__name__)
         self.app.config.update(SQLALCHEMY_DATABASE_URI="sqlite://", TESTING=True)
@@ -26,18 +28,22 @@ class ModelTestCase(TestCase):
         self.contexto = self.app.app_context()
         self.contexto.push()
 
+        # Pede ao SQLite que impeça vínculos com registros inexistentes.
         @event.listens_for(db.engine, "connect")
         def ativar_chaves_estrangeiras(conexao, _registro):
             conexao.execute("PRAGMA foreign_keys=ON")
 
         db.create_all()
 
+    # Remove os dados temporários e encerra a conexão de teste.
     def tearDown(self):
         db.session.remove()
         db.drop_all()
         db.engine.dispose()
         self.contexto.pop()
 
+    # Compara os nomes e propriedades das colunas usadas em Python com a estrutura escrita
+    # para MySQL.
     def test_mapeamento_corresponde_ao_schema_mysql(self):
         esquema = (Path(__file__).parents[1] / "database" / "01_modelo_fisico.sql").read_text(encoding="utf-8")
         tabelas = re.findall(r"CREATE TABLE IF NOT EXISTS `([^`]+)` \((.*?)\) ENGINE=", esquema, re.S)
@@ -60,6 +66,7 @@ class ModelTestCase(TestCase):
                 real = {(fk.parent.name, fk.target_fullname, fk.ondelete, fk.onupdate) for fk in tabela.foreign_keys}
                 self.assertEqual(real, esperado)
 
+    # Cadastra os registros relacionados necessários para testar as operações dos modelos.
     def criar_contexto(self):
         cliente = m.Usuario_model.inserir_cliente("Cliente", "cliente@teste.com", "senha")
         bancada = m.Bancada_model.inserir_bancada("Toscana", Decimal("85.00"))
@@ -72,6 +79,7 @@ class ModelTestCase(TestCase):
         prato = m.Prato_model.inserir_prato("Risoto", Decimal("42.50"))
         return cliente, bancada, reserva, sessao, prato
 
+    # Exercita inserir, consultar, alterar e excluir nos cadastros principais.
     def test_crud_das_nove_entidades(self):
         _, bancada, reserva, sessao, prato = self.criar_contexto()
         pedido = m.Pedido_model.inserir_pedido(sessao.id_sessao, "AGUARDANDO", Decimal("85.00"))
@@ -111,6 +119,8 @@ class ModelTestCase(TestCase):
             self.assertTrue(getattr(model, "deletar_" + nome)(*chave))
             self.assertIsNone(getattr(model, "obter_" + nome)(*chave))
 
+    # Confere se os vínculos de perfil identificam a conta de cliente, cozinheiro ou
+    # administrador.
     def test_usuarios_e_especializacoes_sem_coluna_tipo(self):
         self.assertNotIn("tipo", m.Usuario.__table__.columns)
         cliente = m.Usuario_model.inserir_cliente("Cliente", "cliente@teste.com", "segredo")
@@ -135,6 +145,7 @@ class ModelTestCase(TestCase):
         self.assertEqual(m.Cozinheiro_model.obter_todos(), [])
         self.assertEqual(m.Administrador_model.obter_todos(), [])
 
+    # Confere se é possível criar e consultar um perfil ligado a uma conta já cadastrada.
     def test_vinculos_de_usuarios_existentes(self):
         usuario = m.Usuario_model.inserir_usuario("Usuario", "usuario@teste.com", "senha")
         id_usuario = usuario.id_usuario
@@ -146,6 +157,7 @@ class ModelTestCase(TestCase):
                 self.assertTrue(getattr(model, "deletar_" + nome)(id_usuario))
                 self.assertIsNotNone(m.Usuario_model.obter_usuario_id(id_usuario))
 
+    # Provoca uma falha e confere se desfazer a operação permite usar a conexão novamente.
     def test_rollback_recupera_sessao_apos_erro(self):
         m.Usuario_model.inserir_cliente("Primeiro", "duplicado@teste.com", "senha")
         with self.assertRaises(IntegrityError):
@@ -154,6 +166,8 @@ class ModelTestCase(TestCase):
         self.assertEqual(len(m.Cliente_model.obter_todos()), 1)
         m.Prato_model.inserir_prato("Ainda funciona", 10)
 
+    # Confere se várias alterações podem ser confirmadas juntas como uma única operação do
+    # banco.
     def test_operacoes_podem_compartilhar_transacao(self):
         _, _, _, sessao, prato = self.criar_contexto()
         pedido = m.Pedido_model.inserir_pedido(sessao.id_sessao, "AGUARDANDO", confirmar=False)
@@ -168,6 +182,7 @@ class ModelTestCase(TestCase):
         self.assertEqual(len(m.Pedido_model.obter_todos()), 1)
         self.assertEqual(len(m.ItemPedido_model.obter_todos()), 1)
 
+    # Confere as regras de vínculo e o uso de dois campos para identificar certos registros.
     def test_restricoes_e_chaves_compostas(self):
         _, bancada, reserva, sessao, prato = self.criar_contexto()
         with self.assertRaises(IntegrityError):
@@ -184,6 +199,8 @@ class ModelTestCase(TestCase):
             m.Ingrediente_model.deletar_ingrediente(ingrediente.id_ingrediente)
         self.assertEqual(len(m.FichaTecnica_model.obter_todos(id_prato=prato.id_prato)), 1)
 
+    # Confere que editar um cadastro rejeita campos desconhecidos e mudanças na
+    # identificação.
     def test_chaves_e_campos_desconhecidos_nao_sao_alterados(self):
         prato = m.Prato_model.inserir_prato("Prato", 10)
         with self.assertRaises(TypeError):

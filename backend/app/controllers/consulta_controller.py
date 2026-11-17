@@ -7,6 +7,9 @@ from app.extensions import db
 from app.controllers.http import date,fail,integer,number,text
 
 
+# Valida filtros e busca por texto, aplica as condições no banco e devolve apenas a página
+# pedida, limitada a cem registros. Registra também o total de resultados e o tamanho da
+# página para a interface.
 def paginate(query,model):
     args=request.args
     page=integer(args.get('pagina','1'),'pagina')

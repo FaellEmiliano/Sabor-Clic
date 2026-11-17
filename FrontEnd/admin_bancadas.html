@@ -1,5 +1,7 @@
 <!DOCTYPE html>
+<!-- Permite administrar o cadastro e as tarifas das bancadas. -->
 <html lang="pt-BR">
+<!-- Define a codificação, o título e o estilo da página. -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +10,10 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+  <!-- Atalho de teclado para chegar ao conteúdo principal. -->
   <a href="#app" class="skip-link">Pular para o conteúdo</a>
   <div class="app-shell" id="appShell">
+    <!-- Menu lateral preenchido de acordo com o perfil da conta. -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-mark"><img src="assets/img/logo-mark.png" alt="Sabor e Clic"></div>
@@ -33,6 +37,7 @@
     </aside>
 
     <section class="main-shell">
+      <!-- Barra superior com o controle do menu e a identificação da página. -->
       <header class="topbar">
         <div>
           <button id="sidebarToggle" class="icon-btn mobile-only" onclick="toggleSidebar()" aria-label="Abrir ou fechar menu" aria-expanded="false" aria-controls="sidebar">☰</button>
@@ -43,11 +48,14 @@
         </div>
       </header>
 
+      <!-- O JavaScript preenche esta área com os dados recebidos do servidor. -->
       <main id="app"></main>
     </section>
   </div>
 
+  <!-- Área para avisos temporários, anunciados também por leitores de tela. -->
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <!-- Carrega primeiro os objetos e as funções que o restante dos scripts usa. -->
   <script src="assets/domain.js"></script>
   <script src="assets/data.js"></script>
   <script src="assets/api.js"></script>
@@ -56,9 +64,11 @@
   <script src="assets/validation.js"></script>
   <script src="assets/cart.js"></script>
   <script src="assets/views.js"></script>
+  <!-- Confere a sessão e inicia a tela para o perfil esperado. -->
   <script>
     bootPage("admin", "admin_bancadas");
   </script>
+  <!-- Instala o painel de acessibilidade. -->
   <script src="assets/a11y.js"></script>
 </body>
 </html>

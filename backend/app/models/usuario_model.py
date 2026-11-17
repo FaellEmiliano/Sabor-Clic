@@ -18,6 +18,7 @@ class Usuario(db.Model): # Mapeia os dados comuns exatamente como estão na tabe
     cozinheiro = db.relationship('Cozinheiro', back_populates='usuario', uselist=False, passive_deletes='all')
     administrador = db.relationship('Administrador', back_populates='usuario', uselist=False, passive_deletes='all')
 
+    # Copia os dados da conta e transforma a senha em um código que pode ser comparado no login.
     def __init__(self, nome, email, senha, ativo=True): # Protege a senha antes de preparar o registro.
         self.nome = nome
         self.email = email
@@ -58,6 +59,7 @@ class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários
         return cls._inserir(Usuario(nome, email, senha, ativo), confirmar)
 
     @staticmethod
+    # Cria a conta e o perfil de cliente juntos e devolve o cadastro com o endereço.
     def inserir_cliente(nome, email, senha, endereco_entrega=None, ativo=True, *, confirmar=True): # Insere usuário e cliente na mesma transação.
         cliente = Cliente(usuario=Usuario(nome, email, senha, ativo), endereco_entrega=endereco_entrega)
         db.session.add(cliente)
@@ -65,6 +67,7 @@ class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários
         return cliente
 
     @staticmethod
+    # Cria a conta e o perfil profissional juntos e devolve o cadastro com turno e especialidade.
     def inserir_cozinheiro(nome, email, senha, turno=None, especialidade=None, ativo=True, *, confirmar=True): # Insere usuário e cozinheiro juntos.
         cozinheiro = Cozinheiro(usuario=Usuario(nome, email, senha, ativo), turno=turno, especialidade=especialidade)
         db.session.add(cozinheiro)
@@ -72,6 +75,7 @@ class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários
         return cozinheiro
 
     @staticmethod
+    # Cria a conta junto com o vínculo que lhe dá o perfil administrativo.
     def inserir_administrador(nome, email, senha, ativo=True, *, confirmar=True): # Insere usuário e administrador juntos.
         administrador = Administrador(usuario=Usuario(nome, email, senha, ativo))
         db.session.add(administrador)
@@ -107,6 +111,7 @@ class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários
         return cls._atualizar(id_usuario, campos, confirmar)
 
     @staticmethod
+    # Busca a conta e devolve None se ela não existir. Se existir, salva o novo hash e devolve a conta.
     def atualizar_senha(id_usuario, senha, *, confirmar=True): # Recebe a nova senha e grava somente seu hash.
         usuario = db.session.get(Usuario, id_usuario)
         if usuario is None:
@@ -116,6 +121,7 @@ class Usuario_model(Crud_model): # Classe pra controlar os acessos dos usuários
         return usuario
 
     @staticmethod
+    # Faz uma conta ativa ficar inativa ou o contrário. Se a conta não existir, devolve False.
     def mudar_atividade(id_usuario, *, confirmar=True): # Alterna a atividade do usuário já cadastrado.
         usuario = db.session.get(Usuario, id_usuario)
         if usuario is None:

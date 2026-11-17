@@ -3,6 +3,7 @@
 # Os CRUDs retornam entidades, None para buscas/edições ausentes e bool nas exclusões.
 # confirmar=False executa flush; salvar_alteracoes() confirma o conjunto de operações.
 # Erros SQL fazem rollback e são repassados ao chamador, sem esconder a causa.
+# Reúne os modelos em um único lugar para o restante da aplicação importar.
 from app.models.usuario_model import (
     Usuario, Cliente, Cozinheiro, Administrador,
     Usuario_model, Cliente_model, Cozinheiro_model, Administrador_model,

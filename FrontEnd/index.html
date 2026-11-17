@@ -1,5 +1,7 @@
 <!DOCTYPE html>
+<!-- Página de entrada com formulário de login e acesso ao cadastro de cliente. -->
 <html lang="pt-BR">
+<!-- Define a codificação, o título e o estilo da página. -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +10,7 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+  <!-- Atalho de teclado para chegar ao conteúdo principal. -->
   <a href="#loginForm" class="skip-link">Pular para o formulário de login</a>
   <section class="login-screen" id="loginScreen">
     <div class="login-brand">
@@ -18,6 +21,7 @@
       </div>
     </div>
     <div class="login-form-wrap">
+      <!-- Este formulário aciona o JavaScript que verifica as credenciais com o servidor. -->
       <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
         <h2>Entrar</h2>
         <p class="meta">O sistema identifica automaticamente se você é cliente, cozinheiro ou administrador.</p>
@@ -30,12 +34,15 @@
     </div>
   </section>
 
+  <!-- Área para avisos temporários, anunciados também por leitores de tela. -->
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <!-- Carrega primeiro os objetos e as funções que o restante dos scripts usa. -->
   <script src="assets/domain.js"></script>
   <script src="assets/data.js"></script>
   <script src="assets/api.js"></script>
   <script src="assets/site.js"></script>
   <script src="assets/login.js"></script>
+  <!-- Instala o painel de acessibilidade. -->
   <script src="assets/a11y.js"></script>
 </body>
 </html>

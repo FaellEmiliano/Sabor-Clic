@@ -13,10 +13,13 @@ MAX_BYTES = 5 * 1024 * 1024
 MAX_PIXELS = 20_000_000
 
 
+# Lê nas configurações a pasta que recebe as fotos enviadas.
 def upload_dir():
     return Path(current_app.config['UPLOAD_FOLDER'])
 
 
+# Monta a lista de fotos que podem ser escolhidas, juntando as imagens incluídas no projeto
+# e os envios, com os mais recentes dos envios primeiro.
 def library_items():
     stock = [dict(caminho='/assets/img/products/' + p.name,
                   nome=p.stem.replace('-', ' ').capitalize(), origem='biblioteca')
@@ -26,6 +29,8 @@ def library_items():
     return stock + uploads
 
 
+# Aceita um campo vazio ou o endereço de uma imagem da biblioteca. Rejeita endereços
+# desconhecidos.
 def validate_image_path(value):
     if value is None or value == '':
         return None
@@ -34,6 +39,9 @@ def validate_image_path(value):
     return value
 
 
+# Lista a biblioteca ou recebe uma foto de um administrador. Confere tipo, tamanho e
+# resolução, corrige a orientação, reduz para caber em 1200 por 1200 pixels e guarda em WebP
+# com nome gerado.
 def images():
     permit('administrador')
     if request.method == 'GET':
@@ -67,6 +75,8 @@ def images():
                               nome='Foto enviada ' + filename[:8], origem='upload')), 201
 
 
+# Confere se o nome segue o padrão das fotos enviadas e entrega o arquivo da pasta de
+# envios.
 def image_file(filename):
     # Only generated files are served here; stock assets use the existing static route.
     if len(filename) != 37 or not filename.endswith('.webp') or any(c not in '0123456789abcdef' for c in filename[:-5]):

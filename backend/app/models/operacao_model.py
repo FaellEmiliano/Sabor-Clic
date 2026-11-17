@@ -1,6 +1,8 @@
 """Persistent security sessions, rate limits, audit trail and stock ledger."""
 from app.extensions import db
 
+# Guarda o prazo e o estado de cada sessão de acesso, associada ao usuário e à versão da
+# senha usada.
 class SessaoAutenticacao(db.Model):
     __tablename__='sessao_autenticacao'
     id_sessao_auth=db.Column(db.String(64),primary_key=True)
@@ -11,12 +13,15 @@ class SessaoAutenticacao(db.Model):
     expira_em=db.Column(db.DateTime,nullable=False)
     revogada=db.Column(db.Boolean,nullable=False,server_default=db.text('0'))
 
+# Guarda a janela de tempo e o número de tentativas de acesso de cada identificação.
 class LimiteAcesso(db.Model):
     __tablename__='limite_acesso'
     chave=db.Column(db.String(64),primary_key=True)
     inicio=db.Column(db.DateTime,nullable=False)
     tentativas=db.Column(db.Integer,nullable=False,server_default=db.text('0'))
 
+# Guarda quem fez a requisição, o endereço acessado, a ação, o resultado, o instante e o
+# identificador para busca nos logs.
 class EventoAuditoria(db.Model):
     __tablename__='evento_auditoria'
     id_evento=db.Column(db.Integer,primary_key=True)
@@ -27,6 +32,8 @@ class EventoAuditoria(db.Model):
     resultado=db.Column(db.Integer,nullable=False)
     correlacao=db.Column(db.String(64),nullable=False)
 
+# Guarda entradas e saídas de ingredientes, com o pedido de origem e o ingrediente previsto
+# quando houve substituição.
 class MovimentacaoEstoque(db.Model):
     __tablename__='movimentacao_estoque'
     id_movimentacao=db.Column(db.Integer,primary_key=True)

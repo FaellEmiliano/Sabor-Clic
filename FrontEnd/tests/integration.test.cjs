@@ -5,14 +5,17 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 
+// Executa o JavaScript da interface com o servidor local e confere as telas e operações de cada perfil.
 test('frontend → HTTP API → database → rendered views, for all roles',async()=>{
   let cookie='';
   const store=new Map();
   const elements=new Map();
+  // Cria um elemento simulado por identificação para ler o conteúdo produzido pela interface.
   const element=id=>{
     if(!elements.has(id)) elements.set(id,{innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){}},setAttribute(){}});
     return elements.get(id);
   };
+  // Simula o navegador e faz as chamadas reais à API, guardando o cookie entre requisições.
   const context=vm.createContext({console,Date,FormData,Number,JSON,Promise,URLSearchParams,
     document:{hidden:true,getElementById:element,addEventListener(){}},
     window:{location:{href:'',pathname:''}},
@@ -24,6 +27,7 @@ test('frontend → HTTP API → database → rendered views, for all roles',asyn
       return response;
     }
   });
+  // Carrega os mesmos scripts que as páginas carregam e na mesma ordem.
   for(const file of ['domain','data','api','site','components','validation','cart','views'])
     vm.runInContext(fs.readFileSync(path.join(__dirname,'../assets/'+file+'.js'),'utf8'),context,{filename:file+'.js'});
   const run=code=>vm.runInContext(code,context);

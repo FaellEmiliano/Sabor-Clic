@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Interrompe a instalação ao encontrar erro de comando ou variável ausente.
 set -euo pipefail
 
+# Aceita a opção de incluir dados de demonstração e rejeita argumentos desconhecidos.
 demo=()
 case "${1:-}" in
     '') ;;
@@ -13,6 +15,7 @@ if (( $# > 1 )); then
 fi
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+# Cria um ambiente Python separado para as dependências deste projeto.
 if [[ ! -x .venv/bin/python ]]; then
     if ! command -v python3 >/dev/null || ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
         echo 'Instale Python 3.10 ou superior com suporte a venv.' >&2
@@ -24,12 +27,14 @@ python="$PWD/.venv/bin/python"
 "$python" -c 'import sys; sys.exit(sys.version_info < (3, 10))'
 "$python" -m pip install -r requirements.txt
 
+# Prepara a configuração e aguarda o preenchimento dos dados do MySQL.
 if [[ ! -e .env ]]; then
     "$python" - <<'PY'
 import os
 from pathlib import Path
 from secrets import token_hex
 
+# Restringe os arquivos novos ao usuário atual e prepara a chave das sessões.
 os.umask(0o077)
 template = Path(".env.example").read_text(encoding="utf-8")
 lines = template.splitlines()
@@ -43,6 +48,7 @@ PY
     read -r -p 'Pressione Enter após salvar o .env. '
 fi
 
+# Cria as tabelas, aplica os exemplos se solicitado e mostra como iniciar o servidor.
 cd backend
 "$python" -m flask --app run init-db "${demo[@]}"
 echo 'Instalação concluída.'

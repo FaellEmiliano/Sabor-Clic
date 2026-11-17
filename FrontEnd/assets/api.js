@@ -1,5 +1,8 @@
 // Cookie authentication. CSRF token lives only in memory and is fetched on every page load.
 let csrfToken = '';
+// Envia uma chamada ao servidor com o cookie da conta e o código de segurança. Converte
+// dados comuns em JSON e envia fotos como formulário. Entrega os dados de resposta ou gera
+// um erro com a mensagem recebida.
 async function api(path, options = {}) {
   const headers = {...options.headers};
   const multipart = options.body instanceof FormData;
@@ -23,9 +26,13 @@ async function api(path, options = {}) {
   if (data.csrf_token) csrfToken = data.csrf_token;
   return data;
 }
+// Traduz o nome do perfil do servidor para o nome que a interface usa nos menus e nas
+// páginas.
 function uiRole(user) {
   return {cliente:'cliente', cozinheiro:'cozinha', administrador:'admin'}[user.tipo];
 }
+// Busca a conta conectada e verifica se ela pertence à área aberta. Carrega o carrinho e a
+// estrutura da página. Se faltar login, volta à entrada.
 async function bootPage(expectedRole, pageId) {
   try {
     const data = await api('/me');

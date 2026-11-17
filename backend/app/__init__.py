@@ -11,6 +11,9 @@ from app.controllers.http import fail, protect
 from app.routes.api_routes import api_bp
 
 
+# Monta o servidor Sabor e Clic. Carrega as configurações, liga o banco, registra os
+# endereços da API e das páginas e prepara os comandos de manutenção. Devolve o servidor
+# pronto para uso.
 def criar_app(configuracao=None):
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -29,6 +32,8 @@ def criar_app(configuracao=None):
     from app.controllers.imagem_controller import image_file
     app.add_url_rule('/media/<filename>', 'image_file', image_file)
 
+    # Identifica a requisição, rejeita chamadas de origens externas que não foram
+    # autorizadas e aciona a proteção de acesso.
     @app.before_request
     def access():
         g.request_id=uuid4().hex
@@ -37,6 +42,8 @@ def criar_app(configuracao=None):
             fail('Origem não autorizada.',403)
         protect()
 
+    # Prepara a resposta com permissões para origens cadastradas, dados de paginação e
+    # regras de segurança do navegador. Encaminha o resultado para a auditoria.
     @app.after_request
     def cors(response):
         origin = request.headers.get('Origin')
@@ -63,26 +70,36 @@ def criar_app(configuracao=None):
         from app.controllers.seguranca_controller import record_audit
         return record_audit(response)
 
+    # Devolve o estado online e identifica os fluxos disponíveis para quem consulta o
+    # endereço inicial da API.
     @app.get('/api')
     def status_api():
         return jsonify(aplicacao='Sabor e Clic',status='online',persistencia='banco de dados',fluxo=['reserva','sessao','pedido','kds'])
 
+    # Desfaz alterações pendentes e devolve a mensagem de erro ao navegador com o código
+    # correspondente.
     @app.errorhandler(HTTPException)
     def http_error(error):
         db.session.rollback()
         return jsonify(erro=error.description,codigo={400:'INVALID_INPUT',401:'UNAUTHENTICATED',403:'FORBIDDEN',404:'NOT_FOUND',409:'CONFLICT',429:'RATE_LIMIT'}.get(error.code,'HTTP_ERROR')),error.code
 
+    # Descarta alterações pendentes quando o banco detecta duplicidade, vínculo inválido ou
+    # exclusão impedida. Responde com um conflito.
     @app.errorhandler(IntegrityError)
     def integrity_error(error):
         db.session.rollback()
         return jsonify(erro='Dados em conflito: registro duplicado, vínculo inválido ou exclusão impedida.'),409
 
+    # Desfaz mudanças pendentes, registra a categoria da falha e responde que o banco está
+    # indisponível.
     @app.errorhandler(SQLAlchemyError)
     def database_error(error):
         db.session.rollback()
         app.logger.error('Falha de persistência (%s).',type(error).__name__)
         return jsonify(erro='Não foi possível acessar o banco de dados.'),503
 
+    # Desfaz mudanças pendentes, registra o tipo da falha e o identificador da requisição e
+    # devolve uma mensagem geral.
     @app.errorhandler(Exception)
     def unexpected_error(error):
         db.session.rollback()
@@ -91,10 +108,13 @@ def criar_app(configuracao=None):
 
     frontend = Path(__file__).resolve().parents[2] / 'FrontEnd'
 
+    # Entrega o arquivo HTML da página de entrada quando o visitante acessa a raiz do site.
     @app.get('/')
     def index():
         return send_from_directory(frontend,'index.html')
 
+    # Entrega páginas HTML da pasta principal e arquivos de interface em assets. Responde
+    # que o caminho não existe quando foge desses padrões.
     @app.get('/<path:path>')
     def frontend_file(path):
         if not (path.endswith('.html') and '/' not in path or path.startswith('assets/')):
@@ -103,6 +123,8 @@ def criar_app(configuracao=None):
 
     senha_padrao_demo = 'SaborDemo123!'
 
+    # Cria as tabelas no MySQL. Se a opção de demonstração estiver ativa, também prepara as
+    # contas e os dados de exemplo.
     @app.cli.command('init-db')
     @click.option('--demo', is_flag=True, help='Cria as três contas de demonstração com a senha padrão.')
     def init_db(demo):
@@ -113,16 +135,21 @@ def criar_app(configuracao=None):
         if demo:
             criar_contas_demo(senha_padrao_demo)
 
+    # Interrompe o comando quando a senha de demonstração tem menos de oito caracteres.
     def validar_senha_demo(senha):
         if len(senha) < 8:
             raise click.ClickException('A senha deve ter pelo menos oito caracteres.')
 
+    # Gera a versão protegida da senha, aplica os dados de demonstração e informa quais
+    # contas foram criadas.
     def criar_contas_demo(senha):
         from app.database import seed
         from werkzeug.security import generate_password_hash
         seed(generate_password_hash(senha))
         click.echo('Demonstração criada: admin@demo.local, cliente@demo.local, chef@demo.local.')
 
+    # Usa a senha recebida ou pede que seja digitada sem mostrar na tela. Confere o tamanho
+    # antes de cadastrar os dados de demonstração.
     @app.cli.command('seed-demo')
     @click.option('--senha', default=senha_padrao_demo)
     @click.option('--pedir-senha', is_flag=True, help='Solicita uma senha temporária sem exibi-la.')
@@ -132,6 +159,7 @@ def criar_app(configuracao=None):
         validar_senha_demo(senha)
         criar_contas_demo(senha)
 
+    # Exporta os dados para o caminho passado no terminal e informa que a cópia foi criada.
     @app.cli.command('backup-db')
     @click.argument('path',type=click.Path())
     def backup_db(path):
@@ -139,6 +167,8 @@ def criar_app(configuracao=None):
         backup(path)
         click.echo('Snapshot de dados criado. Trate-o como arquivo confidencial.')
 
+    # Carrega os dados da cópia indicada em um banco vazio e mostra erros de formato ou
+    # compatibilidade no terminal.
     @app.cli.command('restore-db')
     @click.argument('path',type=click.Path(exists=True))
     def restore_db(path):
@@ -147,6 +177,8 @@ def criar_app(configuracao=None):
         except ValueError as error:raise click.ClickException(str(error)) from None
         click.echo('Snapshot restaurado em banco vazio.')
 
+    # Cria uma conta administrativa pelo terminal após verificar o e-mail e o tamanho da
+    # senha. Mostra uma mensagem se o endereço já estiver cadastrado.
     @app.cli.command('create-admin')
     @click.option('--nome',prompt=True)
     @click.option('--email',prompt=True)

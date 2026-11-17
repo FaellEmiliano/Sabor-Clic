@@ -2,6 +2,8 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
+# Representa no Python os dados de uma linha desta tabela.
+# Atendimento aberto para uma reserva, com código e horários de uso.
 class Sessao(db.Model):
     __tablename__ = 'sessao'
 
@@ -19,6 +21,8 @@ class Sessao_model(Crud_model): # Controla somente os acessos dessa entidade ao 
     campos_atualizaveis = ['codigo_acesso','status','iniciado_em','encerrado_em']
 
     @classmethod
+    # Cadastra sessão com reserva, código, estado e horários de atendimento. Devolve o
+    # registro criado.
     def inserir_sessao(cls, id_reserva, codigo_acesso, status, iniciado_em=None, encerrado_em=None, *, confirmar=True): # Insere um novo registro no banco.
         registro = Sessao(
             id_reserva=id_reserva,
@@ -30,17 +34,25 @@ class Sessao_model(Crud_model): # Controla somente os acessos dessa entidade ao 
         return cls._inserir(registro, confirmar)
 
     @classmethod
+    # Busca sessão pela identificação informada. Devolve None quando o registro não
+    # existe.
     def obter_sessao(cls, id_sessao): # Retorna o registro pela chave primária, ou None se não existir.
         return cls._obter(id_sessao)
 
     @classmethod
+    # Lista os registros em ordem de identificação. Os filtros opcionais usam os campos
+    # da tabela.
     def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
         return cls._listar(filtros)
 
     @classmethod
+    # Aplica os campos permitidos ao registro identificado e devolve o resultado. Devolve
+    # None quando ele não existe.
     def atualizar_sessao(cls, id_sessao, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
         return cls._atualizar(id_sessao, campos, confirmar)
 
     @classmethod
+    # Tenta remover o registro identificado. Devolve True se ele foi removido ou False se
+    # já estava ausente.
     def deletar_sessao(cls, id_sessao, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
         return cls._deletar(id_sessao, confirmar)

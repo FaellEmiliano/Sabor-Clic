@@ -2,6 +2,8 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
+# Representa no Python os dados de uma linha desta tabela.
+# Produto vendido no cardápio, com preço, descrição, estado e foto.
 class Prato(db.Model):
     __tablename__ = 'prato'
 
@@ -20,6 +22,8 @@ class Prato_model(Crud_model): # Controla somente os acessos dessa entidade ao b
     campos_atualizaveis = ['nome','descricao','preco','ativo','imagem']
 
     @classmethod
+    # Cadastra prato com nome, preço, descrição e disponibilidade. Devolve o registro
+    # criado.
     def inserir_prato(cls, nome, preco, descricao=None, ativo=True, *, confirmar=True): # Insere um novo registro no banco.
         registro = Prato(
             nome=nome,
@@ -30,17 +34,25 @@ class Prato_model(Crud_model): # Controla somente os acessos dessa entidade ao b
         return cls._inserir(registro, confirmar)
 
     @classmethod
+    # Busca prato pela identificação informada. Devolve None quando o registro não
+    # existe.
     def obter_prato(cls, id_prato): # Retorna o registro pela chave primária, ou None se não existir.
         return cls._obter(id_prato)
 
     @classmethod
+    # Lista os registros em ordem de identificação. Os filtros opcionais usam os campos
+    # da tabela.
     def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
         return cls._listar(filtros)
 
     @classmethod
+    # Aplica os campos permitidos ao registro identificado e devolve o resultado. Devolve
+    # None quando ele não existe.
     def atualizar_prato(cls, id_prato, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
         return cls._atualizar(id_prato, campos, confirmar)
 
     @classmethod
+    # Tenta remover o registro identificado. Devolve True se ele foi removido ou False se
+    # já estava ausente.
     def deletar_prato(cls, id_prato, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
         return cls._deletar(id_prato, confirmar)

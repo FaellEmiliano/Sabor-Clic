@@ -1,8 +1,10 @@
+# Executa os testes automáticos a cada envio ou proposta de alteração.
 name: Tests
 on: [push, pull_request]
 jobs:
   integration:
     runs-on: ubuntu-latest
+    # Sobe um MySQL temporário para conferir a estrutura e as operações concorrentes.
     services:
       mysql:
         image: mysql:8.0
@@ -12,6 +14,7 @@ jobs:
         options: >-
           --health-cmd="mysqladmin ping -h localhost -pci-disposable-only"
           --health-interval=10s --health-timeout=5s --health-retries=10
+    # Instala as ferramentas e verifica servidor, navegador e comunicação entre ambos.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,6 +34,7 @@ jobs:
         run: python -m tests.mysql_verification
       - name: JavaScript domain and validation
         run: node --test FrontEnd/tests/domain.test.cjs FrontEnd/tests/validation.test.cjs
+      # Sobe uma aplicação local para que os testes JavaScript façam chamadas HTTP reais.
       - name: Start disposable HTTP fixture
         working-directory: backend
         run: python -m tests.serve_fixture > "$RUNNER_TEMP/sabor-qa.log" 2>&1 &

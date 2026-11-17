@@ -2,6 +2,8 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
+# Representa no Python os dados de uma linha desta tabela.
+# Período contratado por um cliente para usar uma bancada específica.
 class Reserva(db.Model):
     __tablename__ = 'reserva'
 
@@ -26,6 +28,8 @@ class Reserva_model(Crud_model): # Controla somente os acessos dessa entidade ao
     campos_atualizaveis = ['id_cliente','id_bancada','inicio','fim','status','valor_total']
 
     @classmethod
+    # Cadastra reserva com cliente, bancada, horários, estado e preço total. Devolve o
+    # registro criado.
     def inserir_reserva(cls, id_cliente, id_bancada, inicio, fim, status, valor_total=0.0, *, confirmar=True): # Insere um novo registro no banco.
         registro = Reserva(
             id_cliente=id_cliente,
@@ -38,17 +42,25 @@ class Reserva_model(Crud_model): # Controla somente os acessos dessa entidade ao
         return cls._inserir(registro, confirmar)
 
     @classmethod
+    # Busca reserva pela identificação informada. Devolve None quando o registro não
+    # existe.
     def obter_reserva(cls, id_reserva): # Retorna o registro pela chave primária, ou None se não existir.
         return cls._obter(id_reserva)
 
     @classmethod
+    # Lista os registros em ordem de identificação. Os filtros opcionais usam os campos
+    # da tabela.
     def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
         return cls._listar(filtros)
 
     @classmethod
+    # Aplica os campos permitidos ao registro identificado e devolve o resultado. Devolve
+    # None quando ele não existe.
     def atualizar_reserva(cls, id_reserva, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
         return cls._atualizar(id_reserva, campos, confirmar)
 
     @classmethod
+    # Tenta remover o registro identificado. Devolve True se ele foi removido ou False se
+    # já estava ausente.
     def deletar_reserva(cls, id_reserva, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
         return cls._deletar(id_reserva, confirmar)

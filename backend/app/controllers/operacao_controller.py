@@ -16,6 +16,8 @@ ORDER_NEXT = {'recebido': 'em_preparo', 'em_preparo': 'pronto', 'pronto': 'entre
 FINAL = ('entregue', 'cancelado')
 
 
+# Busca as reservas da mais recente para a mais antiga e mostra ao cliente apenas as
+# próprias. Entrega uma página por vez.
 def reservations():
     query = select(m.Reserva).order_by(m.Reserva.inicio.desc())
     if role() == 'cliente':
@@ -23,8 +25,12 @@ def reservations():
     return paginate(query,m.Reserva)
 
 
+# Cria, remarca ou cancela uma reserva confirmada. Para agendar, confere cliente, bancada e
+# horário, calcula o valor pela duração e impede a ocupação simultânea da mesma bancada.
 def reserve(data, record=None):
     permit('cliente', 'administrador')
+    # Uma reserva existente só pode ser editada enquanto está confirmada.
+    # O cancelamento altera só o estado e libera o horário para outras reservas.
     if record:
         owned(record)
         if record.status != 'confirmada':
@@ -46,7 +52,8 @@ def reserve(data, record=None):
     customer = get(m.Cliente, uid)
     if not customer.usuario.ativo: fail('Cliente inativo.',409)
     bid = integer(data.get('id_bancada', record.id_bancada if record else None), 'id_bancada')
-    # All reservations on a bench serialize on this row, including concurrent requests.
+    # Bloqueia a bancada enquanto confere o horário para evitar que duas pessoas
+    # reservem o mesmo espaço ao mesmo tempo.
     bench = get(m.Bancada, bid, lock=True)
     if not bench.ativa:
         fail('Bancada indisponível.', 409)
@@ -54,10 +61,13 @@ def reserve(data, record=None):
     end = date(data.get('fim', record.fim if record else None), 'fim')
     if end <= start or start < now():
         fail('Informe um período futuro com fim posterior ao início.')
+    # Transforma a duração em horas, inclusive frações, antes de multiplicar pela tarifa.
     duration_hours = Decimal(str((end - start).total_seconds())) / Decimal('3600')
     total = (bench.valor_hora * duration_hours).quantize(Decimal('.01'))
     if total >= Decimal('100000000'):
         fail('O valor total da reserva excede o limite permitido. Escolha um período menor.')
+    # Há sobreposição quando a outra reserva começa antes do novo fim
+    # e acaba depois do novo início. Horários que apenas se encostam são aceitos.
     query = select(m.Reserva).where(m.Reserva.id_bancada == bid,
         m.Reserva.status.in_(('confirmada', 'em_andamento')),
         m.Reserva.inicio < end, m.Reserva.fim > start)
@@ -75,6 +85,8 @@ def reserve(data, record=None):
     return record
 
 
+# Lista as sessões de atendimento com a reserva de cada uma. Para clientes, restringe aos
+# próprios atendimentos.
 def sessions():
     query = select(m.Sessao).join(m.Reserva, m.Sessao.id_reserva == m.Reserva.id_reserva)
     if role() == 'cliente':
@@ -82,6 +94,8 @@ def sessions():
     return paginate(query.order_by(m.Sessao.id_sessao.desc()),m.Sessao)
 
 
+# Abre a sessão dentro do horário de uma reserva confirmada. Gera um código de acesso,
+# impede uma segunda sessão para a mesma reserva e marca a reserva como em andamento.
 def start_session(data):
     permit('cliente', 'administrador')
     reservation = owned(get(m.Reserva, integer(data.get('id_reserva'), 'id_reserva'), lock=True))
@@ -101,6 +115,8 @@ def start_session(data):
     return result
 
 
+# Encerra uma sessão ativa quando todos os pedidos foram entregues ou cancelados. Grava a
+# hora do encerramento e conclui a reserva associada.
 def close_session(sid):
     permit('cliente', 'administrador')
     result = owned(get(m.Sessao, sid, lock=True))
@@ -114,6 +130,8 @@ def close_session(sid):
     return result
 
 
+# Monta a ficha do pedido enviada ao navegador, com o nome da bancada, os itens comprados e
+# os lançamentos de estoque associados.
 def order_json(order):
     result = serial(order)
     items = db.session.execute(select(m.ItemPedido,m.Prato.nome).join(m.Prato,m.ItemPedido.id_prato==m.Prato.id_prato).where(m.ItemPedido.id_pedido==order.id_pedido)).all()
@@ -125,6 +143,8 @@ def order_json(order):
     return result
 
 
+# Busca pedidos e limita a lista aos do próprio cliente quando for o caso. O painel de
+# ativos descarta entregues e cancelados e coloca os mais antigos primeiro.
 def orders(active_only=False):
     query = select(m.Pedido).join(m.Sessao, m.Pedido.id_sessao == m.Sessao.id_sessao).join(m.Reserva, m.Sessao.id_reserva == m.Reserva.id_reserva)
     if role() == 'cliente':
@@ -133,6 +153,9 @@ def orders(active_only=False):
     return paginate(query.order_by(m.Pedido.id_pedido.asc() if active_only else m.Pedido.id_pedido.desc()),m.Pedido)
 
 
+# Confirma um pedido para uma sessão ativa dentro do horário reservado. Agrupa pratos
+# repetidos, usa preços do banco e verifica o estoque antes de gravar pedido, itens e
+# consumo juntos. Uma chave repetida com os mesmos dados devolve o pedido anterior.
 def checkout(data):
     permit('cliente', 'administrador')
     session = owned(get(m.Sessao, integer(data.get('id_sessao'), 'id_sessao'), lock=True))
@@ -142,12 +165,15 @@ def checkout(data):
         fail('Envie Idempotency-Key com 16 a 64 caracteres para confirmar o pedido.')
     items=data.get('itens')
     if not isinstance(items,list) or not items or len(items)>100:fail('Envie entre 1 e 100 itens no pedido.')
+    # Soma linhas repetidas do mesmo prato para conferir o total pedido de cada um.
     counts=Counter()
     for item in items:
         if not isinstance(item,dict):fail('Item inválido.')
         counts[integer(item.get('id_prato'),'id_prato')]+=integer(item.get('quantidade'),'quantidade')
     address=text(data.get('endereco_entrega'),'endereco_entrega',required=False)
     notes=text(data.get('observacoes'),'observacoes',500,required=False)
+    # A chave identifica a tentativa. O resumo do conteúdo confirma se um reenvio
+    # traz os mesmos pratos, quantidades e dados de entrega.
     digest=sha256(json.dumps([session.id_sessao,sorted(counts.items()),address,notes],ensure_ascii=False).encode()).hexdigest()
     previous=db.session.scalar(select(m.Pedido).where(m.Pedido.id_sessao==session.id_sessao,m.Pedido.chave_idempotencia==key))
     if previous:
@@ -163,15 +189,17 @@ def checkout(data):
         dish = get(m.Prato, pid, lock=True)
         if not dish.ativo:
             fail(f'{dish.nome} está indisponível.', 409)
+        # Recalcula no servidor. O preço usado é o do cadastro na hora da compra.
         subtotal = dish.preco * quantity
         total += subtotal
         prepared.append((dish, quantity, subtotal))
     from app.controllers.estoque_controller import allocate,consume
     allocations=allocate(prepared)
-    # No commit until every line and stock movement is validated and inserted.
+    # Confirma a compra somente depois de gravar todos os itens e as baixas de estoque.
     order = m.Pedido(id_sessao=session.id_sessao, status='recebido', valor_total=number(total,'valor_total'),
                      endereco_entrega=address,observacoes=notes,chave_idempotencia=key,hash_requisicao=digest)
     db.session.add(order)
+    # Pede ao banco o número do novo pedido para poder ligar a ele as linhas de compra.
     db.session.flush()
     for dish, quantity, subtotal in prepared:
         db.session.add(m.ItemPedido(id_pedido=order.id_pedido, id_prato=dish.id_prato,
@@ -182,6 +210,9 @@ def checkout(data):
     return order
 
 
+# Atualiza o prazo ou avança o pedido pela sequência recebido, em preparo, pronto e
+# entregue. Registra horários e devolve os ingredientes quando o administrador cancela antes
+# de iniciar o preparo.
 def update_order(pid, data):
     permit('administrador', 'cozinheiro')
     order = get(m.Pedido, pid, lock=True)
@@ -191,6 +222,7 @@ def update_order(pid, data):
         target = data['status']
         if target != ORDER_NEXT.get(order.status) and not (target == 'cancelado' and role() == 'administrador' and order.status not in FINAL):
             fail('Transição de status inválida.', 409)
+        # O estoque volta somente se a equipe ainda não começou a preparar o pedido.
         if target=='cancelado' and order.status=='recebido':
             from app.controllers.estoque_controller import restock
             restock(order.id_pedido)

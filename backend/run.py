@@ -1,4 +1,5 @@
 import os
+# Ponto de entrada do Flask. Cria o aplicativo que será usado pelo terminal ou pelo servidor.
 from app import criar_app
 
 app = criar_app()

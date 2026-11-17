@@ -1,17 +1,22 @@
 // Catalogs are populated exclusively from the API.
+// Ao ler cart, expõe os itens do carrinho. Ao atribuir uma lista, reconstrói o carrinho com ela.
 const state = { carrinho:new Carrinho(), get cart(){return this.carrinho.itens;}, set cart(items){this.carrinho=Carrinho.fromJSON(items);} };
 const benches = [];
 const products = [];
 let currentUser = null;
+// Guarda os itens no navegador sob uma chave que inclui o número da conta conectada.
 function saveCart() {
   if (currentUser) localStorage.setItem(`cart:${currentUser.id_usuario}`, JSON.stringify(state.cart));
 }
+// Recupera o carrinho dessa conta e usa uma lista vazia quando os dados salvos não podem ser
+// lidos.
 function loadCart() {
   try { state.cart = JSON.parse(localStorage.getItem(`cart:${currentUser.id_usuario}`) || '[]'); }
   catch { state.cart = []; }
   if (!Array.isArray(state.cart)) state.cart = [];
 
 }
+// Cada perfil tem sua lista de páginas, com nome do arquivo, ícone e texto do link.
 const menus = {
   cliente:[
     ["cliente_inicio","⌂","Início"],
@@ -43,4 +48,6 @@ const menus = {
 };
 
 const roleInfo = {};
+// Exibe um número em reais, com separadores do português do Brasil. Usa zero quando o valor
+// está ausente.
 function money(value) { return Number(value || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }

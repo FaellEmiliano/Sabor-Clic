@@ -9,6 +9,8 @@ from app.extensions import db
 SQL_DIR=Path(__file__).resolve().parents[1]/'database'
 
 
+# Lê o arquivo SQL e entrega um comando por vez. Pula comentários e linhas vazias, entende
+# mudanças no marcador de fim e aponta se sobrou um comando incompleto.
 def statements(path):
     delimiter=';';buffer=[]
     for line in Path(path).read_text(encoding='utf-8-sig').splitlines():
@@ -23,10 +25,12 @@ def statements(path):
     if buffer:raise ValueError('SQL incompleto: '+str(path))
 
 
+# Envia ao banco cada comando do arquivo SQL indicado, na ordem em que aparece.
 def run_script(connection,name):
     for sql in statements(SQL_DIR/name):connection.exec_driver_sql(sql)
 
 
+# Prepara as tabelas em MySQL usando o arquivo de estrutura do banco.
 def initialize():
     if db.engine.dialect.name!='mysql':
         raise RuntimeError('init-db exige MySQL. SQLite é usado apenas nas fixtures de teste.')
@@ -35,12 +39,16 @@ def initialize():
         run_script(connection,'01_modelo_fisico.sql')
 
 
+# Configura a versão protegida da senha e executa o arquivo que cadastra os dados de
+# demonstração.
 def seed(password_hash):
     with db.engine.begin() as connection:
         connection.exec_driver_sql('SET @demo_password_hash=%s',(password_hash,))
         run_script(connection,'02_insercoes_basicas.sql')
 
 
+# Exporta as linhas de todas as tabelas para um novo arquivo JSON. Identifica datas e
+# decimais para recuperar esses tipos depois e recusa sobrescrever um arquivo existente.
 def backup(path):
     """Logical data snapshot for restoring into an already initialized empty schema."""
     inspector=inspect(db.engine);result={'format':1,'tables':{}}
@@ -53,6 +61,8 @@ def backup(path):
     return target
 
 
+# Confere o formato e exige um banco vazio com as tabelas já criadas. Insere os dados na
+# ordem dos vínculos, recupera datas e decimais e invalida as sessões de acesso restauradas.
 def restore(path):
     """Restore data only into an empty schema initialized by the handwritten SQL."""
     data=json.loads(Path(path).read_text(encoding='utf-8'))

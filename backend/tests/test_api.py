@@ -8,7 +8,11 @@ from app.extensions import db
 from app import models as m
 
 
+# Verifica as respostas da API e as regras de acesso com contas e dados criados para cada
+# teste.
 class ApiTestCase(unittest.TestCase):
+    # Monta um servidor de teste e cadastra usuários, bancada e prato em um banco
+    # temporário.
     def setUp(self):
         self.app = criar_app({'TESTING': True, 'SECRET_KEY': 'test-only',
                               'SQLALCHEMY_DATABASE_URI': 'sqlite://'})
@@ -26,27 +30,33 @@ class ApiTestCase(unittest.TestCase):
         self.dish = m.Prato_model.inserir_prato('Prato', Decimal('12.35')).id_prato
         self.login('cliente@teste.com')
 
+    # Encerra o contexto do servidor e remove os recursos temporários do teste.
     def tearDown(self):
         db.session.remove()
         db.drop_all()
         db.engine.dispose()
         self.ctx.pop()
 
+    # Entra com a conta de teste e guarda o código que autoriza alterações.
     def login(self, email):
         r = self.cliente.post('/api/login', json={'email': email, 'senha': 'senha1234'})
         self.assertEqual(r.status_code, 200, r.get_json())
         self.csrf = r.json['csrf_token']
 
+    # Envia uma chamada de teste no endereço informado incluindo o código da sessão.
     def send(self, method, path, data=None):
         return self.cliente.open(path, method=method, json=data,
                                  headers={'X-CSRF-Token': self.csrf, 'Idempotency-Key':str(uuid4())})
 
+    # Cria uma reserva de teste e devolve seu número.
     def reserve(self):
         start = (datetime.now() + timedelta(days=1)).replace(microsecond=0)
         return self.send('POST', '/api/reservas', {
             'id_bancada': self.bench, 'inicio': start.isoformat(),
             'fim': (start + timedelta(hours=2)).isoformat(), 'valor_total': 0})
 
+    # Executa o caminho de reserva, sessão e pedido para reaproveitar os registros criados
+    # em outros testes.
     def flow(self):
         r = self.reserve()
         self.assertEqual(r.status_code, 201, r.json)
@@ -59,12 +69,15 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 201, r.json)
         return r.json['sessao']['id_sessao']
 
+    # Confere se o servidor responde e entrega a interface e seus arquivos.
     def test_app_and_frontend_start(self):
         self.assertEqual(self.cliente.get('/api').status_code, 200)
         with self.cliente.get('/') as response:
             self.assertEqual(response.status_code, 200)
         self.assertEqual(self.cliente.get('/api/pratos').status_code, 200)
 
+    # Confere as respostas a acesso sem login e a alterações sem o código de segurança da
+    # sessão.
     def test_auth_and_csrf(self):
         self.assertEqual(self.cliente.post('/api/pedidos', json={}).status_code, 403)
         self.assertEqual(self.send('POST', '/api/usuarios/administrador', {}).status_code, 403)
@@ -72,12 +85,15 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.cliente.get('/api/reservas').status_code, 401)
         self.assertEqual(self.cliente.post('/api/login', json={'email': 'cliente@teste.com', 'senha': 'errada'}).status_code, 401)
 
+    # Confere a tarifa aplicada ao período e a rejeição de dois horários sobrepostos na
+    # mesma bancada.
     def test_reserva_calculates_total_and_rejects_overlap(self):
         r = self.reserve()
         self.assertEqual(r.status_code, 201, r.json)
         self.assertEqual(r.json['reserva']['valor_total'], 40)
         self.assertEqual(self.reserve().status_code, 409)
 
+    # Confere se um período cujo custo ultrapassa o limite do banco é recusado.
     def test_reserva_rejects_period_when_total_exceeds_storage_limit(self):
         r = self.send('POST', '/api/reservas', {
             'id_bancada': self.bench, 'inicio': '2444-05-15T06:06',
@@ -86,6 +102,8 @@ class ApiTestCase(unittest.TestCase):
         self.assertIn('Escolha um período menor', r.json['erro'])
         self.assertEqual(self.cliente.get('/api/reservas').json['reservas'], [])
 
+    # Confere se o servidor usa o preço do cadastro e se um erro impede que o pedido seja
+    # salvo pela metade.
     def test_order_is_atomic_and_prices_are_server_side(self):
         sid = self.flow()
         r = self.send('POST', '/api/pedidos', {'id_sessao': sid, 'valor_total': 0,
@@ -98,6 +116,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 404, r.json)
         self.assertEqual(db.session.scalar(db.select(db.func.count()).select_from(m.Pedido)), 1)
 
+    # Confere se um cliente fica impedido de acessar dados que pertencem a outro.
     def test_customer_isolation(self):
         sid = self.flow()
         self.login('outro@teste.com')
@@ -105,6 +124,8 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.cliente.get(f'/api/sessoes/{sid}').status_code, 404)
         self.assertEqual(self.send('POST', '/api/pedidos', {'id_sessao': sid, 'itens': [{'id_prato': self.dish, 'quantidade': 1}]}).status_code, 404)
 
+    # Confere se o pedido aparece no painel da cozinha e se a sessão só pode ser fechada
+    # depois da conclusão dos pedidos.
     def test_kds_and_session_close(self):
         sid = self.flow()
         r = self.send('POST', '/api/pedidos', {'id_sessao': sid, 'itens': [{'id_prato': self.dish, 'quantidade': 1}]})
@@ -118,6 +139,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.send('POST', f'/api/sessoes/{sid}/encerrar', {}).status_code, 200)
         self.assertEqual(self.send('POST', '/api/pedidos', {'id_sessao': sid, 'itens': [{'id_prato': self.dish, 'quantidade': 1}]}).status_code, 409)
 
+    # Confere se dados incompatíveis retornam o código de entrada inválida.
     def test_invalid_payloads_are_400(self):
         for payload in [[], 'texto', {'id_bancada': 'abc'}, {'id_bancada': self.bench, 'inicio': 'errada', 'fim': 'errada'}]:
             self.assertEqual(self.send('POST', '/api/reservas', payload).status_code, 400)
@@ -126,6 +148,7 @@ class ApiTestCase(unittest.TestCase):
             self.assertEqual(self.send('POST', '/api/pratos', {'nome': 'Teste', 'preco': price}).status_code, 400)
 
 
+    # Confere se outros acessos perdem a validade após a troca da senha.
     def test_password_change_invalidates_other_sessions(self):
         other = self.app.test_client()
         response = other.post('/api/login', json={'email':'cliente@teste.com','senha':'senha1234'})
@@ -135,12 +158,16 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.cliente.get('/api/me').status_code,200)
         self.assertEqual(other.get('/api/me').status_code,401)
 
+    # Confere se um erro na edição administrativa impede que parte dos dados do usuário seja
+    # alterada.
     def test_admin_user_update_is_atomic(self):
         self.login('admin@teste.com')
         response = self.send('PATCH', f'/api/usuarios/{self.customer}', {'nome':'Alterado','email':'outro@teste.com'})
         self.assertEqual(response.status_code,409)
         self.assertEqual(db.session.get(m.Usuario,self.customer).nome,'Cliente')
 
+    # Confere se o cadastro público impede a criação de contas privilegiadas e rejeita
+    # campos fora do perfil.
     def test_public_signup_has_no_privilege_escalation(self):
         self.send('POST','/api/logout',{})
         data={'nome':'Novo','email':'novo@teste.com','senha':'senha1234'}
@@ -151,6 +178,8 @@ class ApiTestCase(unittest.TestCase):
         data.update(email='escalacao@teste.com',ativo=False)
         self.assertEqual(self.cliente.post('/api/usuarios/cliente',json=data).status_code,400)
 
+    # Confere as respostas a solicitações de outros sites e à consulta prévia de permissões
+    # feita pelo navegador.
     def test_origin_and_preflight(self):
         self.assertEqual(self.cliente.post('/api/login',json={},headers={'Origin':'https://estranho.example'}).status_code,403)
         self.app.config['CORS_ORIGINS']=['http://localhost:5500']
@@ -159,6 +188,8 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(response.headers['Access-Control-Allow-Origin'],'http://localhost:5500')
         self.assertEqual(response.headers['Access-Control-Allow-Credentials'],'true')
 
+    # Confere cadastros identificados por pares de números e a proteção contra apagar
+    # registros em uso.
     def test_catalog_composite_keys_and_restricted_delete(self):
         self.login('admin@teste.com')
         response=self.send('POST','/api/ingredientes',{'nome':'Arroz','unidade_medida':'kg','quantidade_estoque':10})
@@ -173,6 +204,8 @@ class ApiTestCase(unittest.TestCase):
         # Stock adjustments are auditable history and prevent destructive deletion.
         self.assertEqual(self.send('DELETE',f'/api/ingredientes/{iid}').status_code,409)
 
+    # Confere a rejeição de fatores de troca inválidos e de substituição pelo próprio
+    # ingrediente.
     def test_substitutions_validate_factors_and_identity(self):
         self.login('admin@teste.com')
         a=m.Ingrediente_model.inserir_ingrediente('A','kg',1).id_ingrediente
@@ -183,6 +216,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.send('POST','/api/substituicoes',{'id_ingrediente_original':a,'id_ingrediente_substituto':b}).status_code,201)
         self.assertEqual(self.send('PATCH',f'/api/substituicoes/{a}/substitutos/{b}',{'fator_conversao':2}).status_code,200)
 
+    # Confere as operações que a cozinha pode executar sobre os pratos e pedidos.
     def test_kitchen_only_changes_availability_and_order_status(self):
         self.login('chef@teste.com')
         self.assertEqual(self.send('PATCH',f'/api/pratos/{self.dish}',{'ativo':False}).status_code,200)
@@ -190,6 +224,8 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.cliente.get('/api/usuarios').status_code,403)
         self.assertEqual(self.cliente.get('/api/relatorios').status_code,403)
 
+    # Confere que a sessão só inicia no período reservado e que cada reserva tem uma única
+    # sessão.
     def test_session_requires_reserved_period_and_no_duplicate(self):
         response=self.reserve()
         rid=response.json['reserva']['id_reserva']
@@ -203,6 +239,8 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.send('POST','/api/sessoes',{'id_reserva':rid}).status_code,409)
         self.assertEqual(self.send('PATCH',f'/api/reservas/{rid}',{'status':'cancelada'}).status_code,409)
 
+    # Confere que um pedido rejeitado não deixa linhas no banco e que itens só podem ser
+    # gravados junto do pedido.
     def test_invalid_order_has_no_rows_and_no_direct_item_write(self):
         sid=self.flow()
         for quantity in [0,-1,1.5,True,'abc']:
@@ -211,12 +249,14 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.send('POST','/api/itens-pedido',{}).status_code,405)
         self.assertEqual(db.session.scalar(db.select(db.func.count()).select_from(m.Pedido)),0)
 
+    # Confere se cancelar libera o horário para outro agendamento.
     def test_reservation_cancel_frees_period(self):
         response=self.reserve()
         rid=response.json['reserva']['id_reserva']
         self.assertEqual(self.send('PATCH',f'/api/reservas/{rid}',{'status':'cancelada'}).status_code,200)
         self.assertEqual(self.reserve().status_code,201)
 
+    # Confere se desativar uma conta bloqueia o acesso mesmo com uma sessão aberta.
     def test_inactive_user_loses_session(self):
         self.login('admin@teste.com')
         response=self.send('PATCH',f'/api/usuarios/{self.customer}/status',{})

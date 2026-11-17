@@ -2,6 +2,8 @@ from app.extensions import db
 from app.models._crud import Crud_model
 
 
+# Representa no Python os dados de uma linha desta tabela.
+# Troca entre dois ingredientes com uma prioridade e uma proporção de uso.
 class SubstituicaoIngrediente(db.Model):
     __tablename__ = 'ingrediente_substituicao'
 
@@ -22,6 +24,8 @@ class Substituicao_model(Crud_model): # Controla somente os acessos dessa entida
     campos_atualizaveis = ['prioridade','fator_conversao']
 
     @classmethod
+    # Cadastra substituição com ingredientes original e alternativo, prioridade e
+    # proporção da troca. Devolve o registro criado.
     def inserir_substituicao(cls, id_ingrediente_original, id_ingrediente_substituto, prioridade=1, fator_conversao=1, *, confirmar=True): # Insere um novo registro no banco.
         registro = SubstituicaoIngrediente(
             id_ingrediente_original=id_ingrediente_original,
@@ -32,17 +36,25 @@ class Substituicao_model(Crud_model): # Controla somente os acessos dessa entida
         return cls._inserir(registro, confirmar)
 
     @classmethod
+    # Busca substituição pela identificação informada. Devolve None quando o registro não
+    # existe.
     def obter_substituicao(cls, id_ingrediente_original, id_ingrediente_substituto): # Retorna o registro pela chave primária, ou None se não existir.
         return cls._obter((id_ingrediente_original, id_ingrediente_substituto))
 
     @classmethod
+    # Lista os registros em ordem de identificação. Os filtros opcionais usam os campos
+    # da tabela.
     def obter_todos(cls, **filtros): # Lista registros, permitindo filtros pelas colunas da tabela.
         return cls._listar(filtros)
 
     @classmethod
+    # Aplica os campos permitidos ao registro identificado e devolve o resultado. Devolve
+    # None quando ele não existe.
     def atualizar_substituicao(cls, id_ingrediente_original, id_ingrediente_substituto, *, confirmar=True, **campos): # Atualiza os campos permitidos sem modificar a chave primária.
         return cls._atualizar((id_ingrediente_original, id_ingrediente_substituto), campos, confirmar)
 
     @classmethod
+    # Tenta remover o registro identificado. Devolve True se ele foi removido ou False se
+    # já estava ausente.
     def deletar_substituicao(cls, id_ingrediente_original, id_ingrediente_substituto, *, confirmar=True): # Exclui o registro; vínculos são tratados pelas FKs do banco.
         return cls._deletar((id_ingrediente_original, id_ingrediente_substituto), confirmar)
